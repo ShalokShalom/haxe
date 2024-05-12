@@ -161,9 +161,9 @@ class hxb_reader
 	val mutable doc_pool = Array.make 0 ""
 
 	val mutable classes = Array.make 0 null_class
-	val mutable abstracts = Array.make 0 null_abstract
-	val mutable enums = Array.make 0 null_enum
-	val mutable typedefs = Array.make 0 null_typedef
+	val mutable abstracts = Array.make 0 (Lazy.from_val null_abstract)
+	val mutable enums = Array.make 0 (Lazy.from_val null_enum)
+	val mutable typedefs = Array.make 0 (Lazy.from_val null_typedef)
 	val mutable anons = Array.make 0 null_tanon
 	val mutable anon_fields = Array.make 0 null_field
 	val mutable tmonos = Array.make 0 (mk_mono())
@@ -709,6 +709,9 @@ class hxb_reader
 
 	(* Type instances *)
 
+	method should_lazy_wrap =
+		restore_level = Minimal
+
 	method resolve_ttp_ref = function
 		| 1 ->
 			let i = read_uleb128 ch in
@@ -752,10 +755,20 @@ class hxb_reader
 			c.cl_type
 		| 11 ->
 			let en = self#read_enum_ref in
-			en.e_type
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					(Lazy.force en).e_type
+				)))
+			else
+				(Lazy.force en).e_type
 		| 12 ->
 			let a = self#read_abstract_ref in
-			TType(abstract_module_type a [],[])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TType(abstract_module_type (Lazy.force a) [],[])
+				)))
+			else
+				TType(abstract_module_type (Lazy.force a) [],[])
 		| 13 ->
 			let e = self#read_expr in
 			let c = {null_class with cl_kind = KExpr e; cl_module = current_module } in
@@ -830,52 +843,112 @@ class hxb_reader
 			TInst(c,tl)
 		| 50 ->
 			let en = self#read_enum_ref in
-			TEnum(en,[])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TEnum(Lazy.force en,[])
+				)))
+			else
+				TEnum(Lazy.force en,[])
 		| 51 ->
 			let en = self#read_enum_ref in
 			let t1 = self#read_type_instance in
-			TEnum(en,[t1])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TEnum(Lazy.force en,[t1])
+				)))
+			else
+				TEnum(Lazy.force en,[t1])
 		| 52 ->
 			let en = self#read_enum_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			TEnum(en,[t1;t2])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TEnum(Lazy.force en,[t1;t2])
+				)))
+			else
+				TEnum(Lazy.force en,[t1;t2])
 		| 59 ->
 			let e = self#read_enum_ref in
 			let tl = self#read_types in
-			TEnum(e,tl)
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TEnum(Lazy.force e,tl)
+				)))
+			else
+				TEnum(Lazy.force e,tl)
 		| 60 ->
 			let td = self#read_typedef_ref in
-			TType(td,[])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TType(Lazy.force td,[])
+				)))
+			else
+				TType(Lazy.force td,[])
 		| 61 ->
 			let td = self#read_typedef_ref in
 			let t1 = self#read_type_instance in
-			TType(td,[t1])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TType(Lazy.force td,[t1])
+				)))
+			else
+				TType(Lazy.force td,[t1])
 		| 62 ->
 			let td = self#read_typedef_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			TType(td,[t1;t2])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TType(Lazy.force td,[t1;t2])
+				)))
+			else
+				TType(Lazy.force td,[t1;t2])
 		| 69 ->
 			let t = self#read_typedef_ref in
 			let tl = self#read_types in
-			TType(t,tl)
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TType(Lazy.force t,tl)
+				)))
+			else
+				TType(Lazy.force t,tl)
 		| 70 ->
 			let a = self#read_abstract_ref in
-			TAbstract(a,[])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TAbstract(Lazy.force a,[])
+				)))
+			else
+				TAbstract(Lazy.force a,[])
 		| 71 ->
 			let a = self#read_abstract_ref in
 			let t1 = self#read_type_instance in
-			TAbstract(a,[t1])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TAbstract(Lazy.force a,[t1])
+				)))
+			else
+				TAbstract(Lazy.force a,[t1])
 		| 72 ->
 			let a = self#read_abstract_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			TAbstract(a,[t1;t2])
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TAbstract(Lazy.force a,[t1;t2])
+				)))
+			else
+				TAbstract(Lazy.force a,[t1;t2])
 		| 79 ->
 			let a = self#read_abstract_ref in
 			let tl = self#read_types in
-			TAbstract(a,tl)
+			if self#should_lazy_wrap then
+				TLazy (ref (LWait (fun () ->
+					TAbstract(Lazy.force a,tl)
+				)))
+			else
+				TAbstract(Lazy.force a,tl)
 		| 80 ->
 			empty_anon
 		| 81 ->
@@ -1244,6 +1317,7 @@ class hxb_reader
 						let e1 = loop () in
 						let en = self#read_enum_ref in
 						let ef = self#read_enum_field_ref in
+						let en = Lazy.force en in
 						TField(e1,FEnum(en,ef)),None
 					| 108 ->
 						let e1 = loop () in
@@ -1270,11 +1344,12 @@ class hxb_reader
 						TTypeExpr (TClassDecl c),(Some c.cl_type)
 					| 121 ->
 						let en = self#read_enum_ref in
+						let en = Lazy.force en in
 						TTypeExpr (TEnumDecl en),(Some en.e_type)
 					| 122 ->
-						TTypeExpr (TAbstractDecl self#read_abstract_ref),None
+						TTypeExpr (TAbstractDecl (Lazy.force self#read_abstract_ref)),None
 					| 123 ->
-						TTypeExpr (TTypeDecl self#read_typedef_ref),None
+						TTypeExpr (TTypeDecl (Lazy.force self#read_typedef_ref)),None
 					| 124 ->
 						TCast(loop (),None),None
 					| 125 ->
@@ -1498,7 +1573,7 @@ class hxb_reader
 			KGenericInstance(c,tl)
 		| 5 -> KMacroType
 		| 6 -> KGenericBuild (self#read_list (fun () -> self#read_cfield))
-		| 7 -> KAbstractImpl self#read_abstract_ref
+		| 7 -> KAbstractImpl (Lazy.force self#read_abstract_ref)
 		| 8 -> KModuleFields current_module
 		| i ->
 			error (Printf.sprintf "Invalid class kind id: %i" i)
@@ -1600,6 +1675,7 @@ class hxb_reader
 		let a = Array.init l (fun i ->
 			let en = self#read_enum_ref in
 			let name = self#read_string in
+			let en = Lazy.force en in
 			PMap.find name en.e_constrs
 		) in
 		enum_fields <- a
@@ -1723,7 +1799,7 @@ class hxb_reader
 	method read_afd =
 		let l = read_uleb128 ch in
 		for i = 0 to l - 1 do
-			let a = abstracts.(i) in
+			let a = Lazy.force abstracts.(i) in
 			self#read_abstract_fields a;
 		done
 
@@ -1737,21 +1813,21 @@ class hxb_reader
 	method read_abd =
 		let l = read_uleb128 ch in
 		for i = 0 to l - 1 do
-			let a = abstracts.(i) in
+			let a = Lazy.force abstracts.(i) in
 			self#read_abstract a;
 		done
 
 	method read_end =
 		let l = read_uleb128 ch in
 		for i = 0 to l - 1 do
-			let en = enums.(i) in
+			let en = Lazy.force enums.(i) in
 			self#read_enum en;
 		done
 
 	method read_efd =
 		let l = read_uleb128 ch in
 		for i = 0 to l - 1 do
-			let e = enums.(i) in
+			let e = Lazy.force enums.(i) in
 			self#read_enum_fields e;
 			Type.unify (TType(enum_module_type e,[])) e.e_type
 		done
@@ -1785,7 +1861,7 @@ class hxb_reader
 	method read_tdd =
 		let l = read_uleb128 ch in
 		for i = 0 to l - 1 do
-			let t = typedefs.(i) in
+			let t = Lazy.force typedefs.(i) in
 			self#read_typedef t;
 		done
 
@@ -1804,33 +1880,39 @@ class hxb_reader
 		let l = read_uleb128 ch in
 		abstracts <- (Array.init l (fun i ->
 			let (pack,mname,tname) = self#read_full_path in
-			match self#resolve_type pack mname tname with
-			| TAbstractDecl a ->
-				a
-			| _ ->
-				error ("Unexpected type where abstract was expected: " ^ (s_type_path (pack,tname)))
+			Lazy.from_fun (fun () ->
+				match self#resolve_type pack mname tname with
+				| TAbstractDecl a ->
+					a
+				| _ ->
+					error ("Unexpected type where abstract was expected: " ^ (s_type_path (pack,tname)))
+			)
 		))
 
 	method read_enr =
 		let l = read_uleb128 ch in
 		enums <- (Array.init l (fun i ->
 			let (pack,mname,tname) = self#read_full_path in
-			match self#resolve_type pack mname tname with
-			| TEnumDecl en ->
-				en
-			| _ ->
-				error ("Unexpected type where enum was expected: " ^ (s_type_path (pack,tname)))
+			Lazy.from_fun (fun () ->
+				match self#resolve_type pack mname tname with
+				| TEnumDecl en ->
+					en
+				| _ ->
+					error ("Unexpected type where enum was expected: " ^ (s_type_path (pack,tname)))
+			)
 		))
 
 	method read_tdr =
 		let l = read_uleb128 ch in
 		typedefs <- (Array.init l (fun i ->
 			let (pack,mname,tname) = self#read_full_path in
-			match self#resolve_type pack mname tname with
-			| TTypeDecl tpd ->
-				tpd
-			| _ ->
-				error ("Unexpected type where typedef was expected: " ^ (s_type_path (pack,tname)))
+			Lazy.from_fun (fun () ->
+				match self#resolve_type pack mname tname with
+				| TTypeDecl tpd ->
+					tpd
+				| _ ->
+					error ("Unexpected type where typedef was expected: " ^ (s_type_path (pack,tname)))
+			)
 		))
 
 	method read_imports =
@@ -1908,12 +1990,12 @@ class hxb_reader
 			| 2 ->
 				let td = mk_typedef current_module path pos name_pos (mk_mono()) in
 				td.t_params <- Array.to_list params;
-				typedefs <- Array.append typedefs (Array.make 1 td);
+				typedefs <- Array.append typedefs (Array.make 1 (Lazy.from_val td));
 				TTypeDecl td
 			| 3 ->
 				let a = mk_abstract current_module path pos name_pos in
 				a.a_params <- Array.to_list params;
-				abstracts <- Array.append abstracts (Array.make 1 a);
+				abstracts <- Array.append abstracts (Array.make 1 (Lazy.from_val a));
 				TAbstractDecl a
 			| _ ->
 				error ("Invalid type kind: " ^ (string_of_int kind));
