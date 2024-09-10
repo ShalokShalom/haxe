@@ -152,7 +152,7 @@ class hxb_reader
 	(timers_enabled : bool)
 = object(self)
 	val mutable api = Obj.magic ""
-	val mutable minimal_restore = false
+	val mutable full_restore = true
 	val mutable current_module = null_module
 
 	val mutable ch = BytesWithPosition.create (Bytes.create 0)
@@ -177,9 +177,21 @@ class hxb_reader
 	val mutable field_type_parameter_offset = 0
 	val empty_anon = mk_anon (ref Closed)
 
+	method add_dependency mdep =
+		match current_module.m_extra.m_display_deps with
+		| Some deps ->
+			if mdep != null_module && (current_module.m_path != mdep.m_path || current_module.m_extra.m_sign != mdep.m_extra.m_sign) then
+				current_module.m_extra.m_display_deps <- Some (PMap.add mdep.m_id ({md_sign = mdep.m_extra.m_sign; md_path = mdep.m_path; md_kind = mdep.m_extra.m_kind; md_origin = MDepFromTyping}) deps)
+		| None -> die "" __LOC__
+
 	method resolve_type pack mname tname =
 		try
-			api#resolve_type pack mname tname
+			let mt = api#resolve_type pack mname tname in
+			if not full_restore then begin
+				let tinfos = t_infos mt in
+				self#add_dependency tinfos.mt_module;
+			end;
+			mt
 		with Not_found ->
 			dump_backtrace();
 			error (Printf.sprintf "[HXB] [%s] Cannot resolve type %s" (s_type_path current_module.m_path) (s_type_path ((pack @ [mname]),tname)))
@@ -2020,11 +2032,12 @@ class hxb_reader
 			assert(has_string_pool);
 			current_module <- self#read_mdf;
 			incr stats.modules_partially_restored;
+			if not full_restore then current_module.m_extra.m_display_deps <- Some PMap.empty
 		| MTF ->
 			current_module.m_types <- self#read_mtf;
 			api#add_module current_module;
 		| IMP ->
-			if not minimal_restore then self#read_imports;
+			if full_restore then self#read_imports;
 		| CLR ->
 			self#read_clr;
 		| ENR ->
@@ -2092,11 +2105,11 @@ class hxb_reader
 		close()
 
 	method read_chunks (new_api : hxb_reader_api) (chunks : cached_chunks) =
-		fst (self#read_chunks_until new_api chunks EOM false)
+		fst (self#read_chunks_until new_api chunks EOM true)
 
-	method read_chunks_until (new_api : hxb_reader_api) (chunks : cached_chunks) end_chunk minimal_restore' =
+	method read_chunks_until (new_api : hxb_reader_api) (chunks : cached_chunks) end_chunk full_restore' =
 		api <- new_api;
-		minimal_restore <- minimal_restore';
+		full_restore <- full_restore';
 		let rec loop = function
 			| (kind,data) :: chunks ->
 				ch <- BytesWithPosition.create data;
@@ -2109,7 +2122,7 @@ class hxb_reader
 
 	method read (new_api : hxb_reader_api) (bytes : bytes) =
 		api <- new_api;
-		minimal_restore <- false;
+		full_restore <- true;
 		ch <- BytesWithPosition.create bytes;
 		if (Bytes.to_string (read_bytes ch 3)) <> "hxb" then
 			raise (HxbFailure "magic");
