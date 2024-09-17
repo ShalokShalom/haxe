@@ -452,7 +452,10 @@ class hxb_reader_api_server
 				t_hxb();
 				r
 			in
-			let m,chunks = f_next (if full_restore then mc.mc_chunks else mc.mc_min_chunks) EOT in
+			let m,chunks = f_next (match restore_level with
+				| Full | DisplayFile -> mc.mc_chunks
+				| Minimal -> mc.mc_min_chunks
+			) EOT in
 
 			(* We try to avoid reading expressions as much as possible, so we only do this for
 				 our current display file if we're in display mode. *)
@@ -485,8 +488,8 @@ let handle_cache_bound_objects com cbol =
 			Hashtbl.replace com.resources name data
 		| IncludeFile(file,position) ->
 			com.include_files <- (file,position) :: com.include_files
-		| Warning(w,msg,p) ->
-			com.warning w [] msg p
+		| Warning(w,options,msg,p) ->
+			com.warning w options msg p
 	) cbol
 
 (* Adds module [m] and all its dependencies (recursively) from the cache to the current compilation
@@ -605,7 +608,10 @@ and type_module sctx com delay mpath p =
 						t_hxb();
 						r
 					in
-					let m,chunks = f_next (if full_restore then mc.mc_chunks else mc.mc_min_chunks) EOT in
+					let m,chunks = f_next (match restore_level with
+						| Full | DisplayFile -> mc.mc_chunks
+						| Minimal -> mc.mc_min_chunks
+					) EOT in
 					(* We try to avoid reading expressions as much as possible, so we only do this for
 					   our current display file if we're in display mode. *)
 					if restore_level <> Minimal then ignore(f_next chunks EOM)
