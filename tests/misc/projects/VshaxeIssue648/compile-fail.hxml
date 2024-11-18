@@ -1,0 +1,4 @@
+--main Main
+--interp
+-D message.reporting=pretty
+-D message.no-color

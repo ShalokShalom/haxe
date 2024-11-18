@@ -1,0 +1,64 @@
+[ERROR] Main.hx:5: characters 17-21
+
+  5 |  trace('Jeremy $test');
+    |                 ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
+[ERROR] Main.hx:6: characters 17-21
+
+  6 |  trace('Jérémy $test');
+    |                 ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
+[ERROR] Main.hx:7: characters 16-20
+
+  7 |  trace('名 字 $test');
+    |                ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
+[ERROR] Main.hx:8: characters 17-21
+
+  8 |  trace('zя���� $test abcdefghijk');
+    |                 ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
+[ERROR] Main.hx:9: characters 15-19
+
+  9 |  trace('���� $test abcdefghijk');
+    |               ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
+[ERROR] Main.hx:10: characters 13-17
+
+ 10 |  trace('zя $test abcdefghijk');
+    |             ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
+[ERROR] Main.hx:11: characters 16-20
+
+ 11 |  trace('😀 😀 $test abcdefghijk');
+    |                ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
+[ERROR] Main.hx:12: characters 23-27
+
+ 12 |  trace('😀 😀 zя���� $test abcdefghijk');
+    |                       ^^^^
+    | Unknown identifier : test
+
+        | For function argument 'v'
+
