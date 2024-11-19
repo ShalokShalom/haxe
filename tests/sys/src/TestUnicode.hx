@@ -145,7 +145,9 @@ class TestUnicode extends utest.Test {
 		Sys.setCwd("test-res");
 		function enterLeave(dir:String, ?alt:String):Void {
 			Sys.setCwd(dir);
-			assertUEnds(Path.removeTrailingSlashes(Path.normalize(Sys.getCwd())), '/test-res/${dir}', alt != null ? '/test-res/${alt}' : null);
+			// Dodge that for now..
+			assertUEnds(Path.removeTrailingSlashes(Path.normalize(Sys.getCwd())), "/test-res/" + dir, alt != null ? "/test-res/" + alt : null);
+			// assertUEnds(Path.removeTrailingSlashes(Path.normalize(Sys.getCwd())), '/test-res/${dir}', alt != null ? '/test-res/${alt}' : null);
 			Sys.setCwd("..");
 		}
 		for (filename in names) switch (filename) {
