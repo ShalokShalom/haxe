@@ -156,7 +156,7 @@ class Jvm {
 				callArgs[i] = args[i];
 				continue;
 			}
-			if (arg == (cast java.lang.Double.DoubleClass) && argType == cast java.lang.Integer.IntegerClass) {
+			if (arg == (cast java.lang.Double.DoubleClass) && argType == cast java.lang.Integer) {
 				callArgs[i] = numberToDouble(args[i]);
 			} else {
 				return None;
@@ -275,7 +275,7 @@ class Jvm {
 		}
 		// TODO: other basic types
 		return if (c == cast Int) {
-			cast java.lang.Integer.IntegerClass;
+			cast java.lang.Integer;
 		} else if (c == cast Float) {
 			cast java.lang.Double.DoubleClass;
 		} else if (c == cast Bool) {
@@ -437,7 +437,7 @@ class Jvm {
 		} else if (instanceof(obj, java.lang.Double.DoubleClass)) {
 			var n:java.lang.Number = cast obj;
 			if (n.doubleValue() == n.intValue()) {
-				return java.lang.Integer.IntegerClass.valueOf(n.intValue()).toString();
+				return java.lang.Integer.valueOf(n.intValue()).toString();
 			}
 			return obj.toString();
 		} else {
@@ -461,7 +461,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) + toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) + toInt(b);
 		}
 		throw "Invalid operation";
@@ -474,7 +474,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) - toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) - toInt(b);
 		}
 		throw "Invalid operation";
@@ -487,7 +487,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) * toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) * toInt(b);
 		}
 		throw "Invalid operation";
@@ -500,7 +500,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) / toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) / toInt(b);
 		}
 		throw "Invalid operation";
@@ -513,7 +513,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) % toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) % toInt(b);
 		}
 		throw "Invalid operation";
@@ -523,7 +523,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) & toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) & toInt(b);
 		}
 		throw "Invalid operation";
@@ -533,7 +533,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) | toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) | toInt(b);
 		}
 		throw "Invalid operation";
@@ -543,7 +543,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) ^ toLong(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) ^ toInt(b);
 		}
 		throw "Invalid operation";
@@ -553,7 +553,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) << toInt(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) << toInt(b);
 		}
 		throw "Invalid operation";
@@ -563,7 +563,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) >> toInt(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) >> toInt(b);
 		}
 		throw "Invalid operation";
@@ -573,7 +573,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass) || instanceof(b, java.lang.Long.LongClass)) {
 			return toLong(a) >>> toInt(b);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass) || instanceof(b, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer) || instanceof(b, java.lang.Integer)) {
 			return toInt(a) >>> toInt(b);
 		}
 		throw "Invalid operation";
@@ -586,7 +586,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass)) {
 			return toLong(a) + 1.;
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer)) {
 			return toInt(a) + 1;
 		}
 		throw "Invalid operation";
@@ -599,7 +599,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass)) {
 			return toLong(a) - 1.;
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer)) {
 			return toInt(a) - 1;
 		}
 		throw "Invalid operation";
@@ -612,7 +612,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass)) {
 			return -toLong(a);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer)) {
 			return -toInt(a);
 		}
 		throw "Invalid operation";
@@ -622,7 +622,7 @@ class Jvm {
 		if (instanceof(a, java.lang.Long.LongClass)) {
 			return ~toLong(a);
 		}
-		if (instanceof(a, java.lang.Integer.IntegerClass)) {
+		if (instanceof(a, java.lang.Integer)) {
 			return ~toInt(a);
 		}
 		throw "Invalid operation";

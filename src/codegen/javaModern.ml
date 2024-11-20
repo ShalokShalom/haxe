@@ -677,6 +677,7 @@ module SignatureConverter = struct
 		| TObject ( (["java";"lang"], "Object"), [] ) -> mk_type_path ([], "Dynamic") [] p
 		| TObject ( (["java";"lang"], "String"), [] ) -> mk_type_path (["std"], "String") [] p
 		| TObject ( (["java";"lang"], "Enum"), [_] ) -> mk_type_path ([], "EnumValue") [] p
+		| TObject ( (["java";"lang"], "Integer"), [] ) -> mk_type_path (["jvm";"lang"], "Integer") [] p
 		| TObject ( path, [] ) ->
 			mk_type_path path [] p
 		| TObject ( path, args ) -> mk_type_path path (List.map (convert_arg ctx p) args) p

@@ -46,7 +46,7 @@ class Std {
 		if (clt == cast java.lang.Double.DoubleClass) {
 			// Haxe semantics: any number is assignable to Float
 			clt = cast java.lang.Number;
-		} else if (clt == cast java.lang.Integer.IntegerClass) {
+		} else if (clt == cast java.lang.Integer) {
 			if (!Jvm.instanceof(v, java.lang.Number)) {
 				return false;
 			}

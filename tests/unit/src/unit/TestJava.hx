@@ -50,10 +50,10 @@ class TestJava extends Test {
 		eq(cl.boolTest2(true), 1);
 		eq(cl.boolTest2(false), 0);
 
-		var i:java.lang.Integer = null;
+		var i:jvm.lang.Integer = null;
 		eq(cl.intTest1(i), 100);
-		eq(cl.intTest1(cast(-1, java.lang.Integer)), -1);
-		eq(cl.intTest1(cast(1000, java.lang.Integer)), 1000);
+		eq(cl.intTest1(cast(-1, jvm.lang.Integer)), -1);
+		eq(cl.intTest1(cast(1000, jvm.lang.Integer)), 1000);
 		i = -1;
 		eq(cl.intTest1(i), -1);
 		i = null;
