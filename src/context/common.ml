@@ -944,27 +944,6 @@ let flash_versions = List.map (fun v ->
 	v, string_of_int maj ^ (if min = 0 then "" else "_" ^ string_of_int min)
 ) [9.;10.;10.1;10.2;10.3;11.;11.1;11.2;11.3;11.4;11.5;11.6;11.7;11.8;11.9;12.0;13.0;14.0;15.0;16.0;17.0;18.0;19.0;20.0;21.0;22.0;23.0;24.0;25.0;26.0;27.0;28.0;29.0;31.0;32.0]
 
-let flash_version_tag = function
-	| 6. -> 6
-	| 7. -> 7
-	| 8. -> 8
-	| 9. -> 9
-	| 10. | 10.1 -> 10
-	| 10.2 -> 11
-	| 10.3 -> 12
-	| 11. -> 13
-	| 11.1 -> 14
-	| 11.2 -> 15
-	| 11.3 -> 16
-	| 11.4 -> 17
-	| 11.5 -> 18
-	| 11.6 -> 19
-	| 11.7 -> 20
-	| 11.8 -> 21
-	| 11.9 -> 22
-	| v when v >= 12.0 && float_of_int (int_of_float v) = v -> int_of_float v + 11
-	| v -> failwith ("Invalid SWF version " ^ string_of_float v)
-
 let update_platform_config com =
 	match com.platform with
 	| CustomTarget _ ->

@@ -174,7 +174,9 @@ let generate ctx tctx ext actx =
 			with Not_found ->
 				None
 			in
-			Genswf.generate header,"swf"
+			(fun com ->
+				Genswf.generate header com.Common.native_libs.swf_libs com.Common.flash_version (Common.to_gctx com)
+			),"swf"
 		| Neko ->
 			(fun com ->
 				Genneko.generate com.neko_lib_paths (Common.to_gctx com)
