@@ -2,7 +2,6 @@ open Extlib_leftovers
 open Ast
 open Type
 open Error
-open Common
 open Globals
 open CppAst
 open CppTypeUtils
@@ -575,7 +574,7 @@ and type_string_remap remap haxe_type =
 
 and type_string haxe_type =
    type_string_suff "" haxe_type true
-   
+
 and cpp_enum_path_of enum =
    let globalNamespace =
       match get_meta_string enum.e_meta Meta.Native with
@@ -614,7 +613,7 @@ and gen_interface_arg_type_name name opt typ =
 
 and gen_tfun_interface_arg_list args =
    String.concat "," (List.map (fun (name,opt,typ) -> gen_interface_arg_type_name name opt typ) args)
-   
+
 and cant_be_null haxe_type =
    is_numeric haxe_type || (type_has_meta_key Meta.NotNull haxe_type )
 
