@@ -190,7 +190,9 @@ let generate ctx tctx ext actx =
 				Genlua.generate (Common.to_gctx com)
 			),"lua"
 		| Php ->
-			Genphp7.generate,"php"
+			(fun com ->
+				Genphp7.generate (Common.to_gctx com)
+			),"php"
 		| Cpp ->
 			Gencpp.generate,"cpp"
 		| Jvm ->
