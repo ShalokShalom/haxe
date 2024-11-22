@@ -276,9 +276,8 @@ let build_swf9 com file swc =
 		classes := { f9_cid = Some !cid; f9_classname = s_type_path (Genswf9.resource_path name) } :: !classes;
 		tag (TBinaryData (!cid,data)) :: acc
 	) com.resources [] in
-	let find_file f = (com.class_paths#find_file f).file in
 	let load_file_data file p =
-		let file = try find_file file with Not_found -> file in
+		let file = try Gctx.find_file com  file with Not_found -> file in
 		if String.length file > 5 && String.sub file 0 5 = "data:" then
 			String.sub file 5 (String.length file - 5)
 		else
@@ -578,8 +577,7 @@ let generate swf_header swf_libs flash_version com =
 	let meta_data =
 		try
 			let file = Gctx.defined_value com Define.SwfMetadata in
-			let find_file f = (com.class_paths#find_file f).file in
-			let file = try find_file file with Not_found -> file in
+			let file = try Gctx.find_file com file with Not_found -> file in
 			let data = try Std.input_file ~bin:true file with Sys_error _ -> failwith ("Metadata resource file not found : " ^ file) in
 			[tag(TMetaData (data))]
 		with Not_found ->

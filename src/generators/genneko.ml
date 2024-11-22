@@ -784,7 +784,6 @@ let generate neko_lib_paths com =
 	let e = (EBlock ((header()) @ libs :: el @ emain), null_pos) in
 	let source = Gctx.defined com Define.NekoSource in
 	let use_nekoc = Gctx.defined com Define.UseNekoc in
-	let find_file f = (com.class_paths#find_file f).file in
 	if not use_nekoc then begin
 		try
 			Path.mkdir_from_path com.file;
@@ -792,7 +791,7 @@ let generate neko_lib_paths com =
 			Nbytecode.write ch (Ncompile.compile ctx.version e);
 			IO.close_out ch;
 		with Ncompile.Error (msg,pos) ->
-			let pfile = find_file pos.psource in
+			let pfile = Gctx.find_file com pos.psource in
 			let rec loop p =
 				let pp = { pfile = pfile; pmin = p; pmax = p; } in
 				if Lexer.get_error_line pp >= pos.pline then

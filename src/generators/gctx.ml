@@ -18,6 +18,7 @@ type t = {
 	run_command_args : string -> string list -> int;
 	warning : warning_function;
 	error : error_function;
+	print : string -> unit;
 	basic : basic_types;
 	debug : bool;
 	file : string;
@@ -108,3 +109,11 @@ let get_entry_point gctx =
 		let e = Option.get gctx.main.main_expr in (* must be present at this point *)
 		(snd path, c, e)
 	) gctx.main.main_class
+
+let get_es_version defines =
+	try int_of_string (Define.defined_value defines Define.JsEs) with _ -> 0
+
+let map_source_header defines f =
+	match Define.defined_value_safe defines Define.SourceHeader with
+	| "" -> ()
+	| s -> f s

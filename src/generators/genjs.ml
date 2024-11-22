@@ -89,7 +89,7 @@ let es5kwds = [
 
 let setup_kwds com =
 	Hashtbl.reset kwds;
-	let es_version = Gctx_todo.get_es_version com.defines in
+	let es_version = Gctx.get_es_version com.defines in
 	let lst = if es_version >= 5 then es5kwds else es3kwds in
 	List.iter (fun s -> Hashtbl.add kwds s ()) lst
 
@@ -1697,13 +1697,13 @@ let generate js_gen com =
 	| Some g -> g()
 	| None ->
 
-	let es_version = Gctx_todo.get_es_version com.defines in
+	let es_version = Gctx.get_es_version com.defines in
 
 	if es_version >= 6 then
 		ES6Ctors.rewrite_ctors com;
 
 	let ctx = alloc_ctx com es_version in
-	Gctx_todo.map_source_header com.defines (fun s -> print ctx "// %s\n" s);
+	Gctx.map_source_header com.defines (fun s -> print ctx "// %s\n" s);
 	if has_feature ctx "Class" || has_feature ctx "Type.getClassName" then add_feature ctx "js.Boot.isClass";
 	if has_feature ctx "Enum" || has_feature ctx "Type.getEnumName" then add_feature ctx "js.Boot.isEnum";
 

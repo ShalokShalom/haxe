@@ -2009,7 +2009,7 @@ let transform_multireturn ctx = function
 let generate com =
     let ctx = alloc_ctx com in
 
-    Gctx_todo.map_source_header com.defines (fun s -> print ctx "-- %s\n" s);
+    Gctx.map_source_header com.defines (fun s -> print ctx "-- %s\n" s);
 
     if has_feature ctx "Class" || has_feature ctx "Type.getClassName" then add_feature ctx "lua.Boot.isClass";
     if has_feature ctx "Enum" || has_feature ctx "Type.getEnumName" then add_feature ctx "lua.Boot.isEnum";

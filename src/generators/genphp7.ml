@@ -3043,7 +3043,7 @@ class virtual type_builder ctx (wrapper:type_wrapper) =
 			writer#indent 0;
 			writer#write_line "<?php";
 			writer#write_line "/**";
-			Gctx_todo.map_source_header ctx.pgc_common.defines (fun s -> writer#write_line (" * " ^ s));
+			Gctx.map_source_header ctx.pgc_common.defines (fun s -> writer#write_line (" * " ^ s));
 			if ctx.pgc_common.debug then writer#write_line (" * Haxe source file: " ^ self#get_source_file);
 			writer#write_line " */";
 			writer#write "\n";

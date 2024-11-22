@@ -437,6 +437,7 @@ let to_gctx com = {
 	run_command_args = com.run_command_args;
 	warning = com.warning;
 	error = com.error;
+	print = com.print;
 	debug = com.debug;
 	file = com.file;
 	version = com.version;
@@ -604,7 +605,7 @@ let get_config com =
 		(* impossible to reach. see update_platform_config *)
 		raise Exit
 	| Js ->
-		let es6 = Gctx_todo.get_es_version com.defines >= 6 in
+		let es6 = Gctx.get_es_version com.defines >= 6 in
 		{
 			default_config with
 			pf_static = false;
