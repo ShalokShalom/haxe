@@ -196,7 +196,9 @@ let generate ctx tctx ext actx =
 				Genjvm.generate actx.jvm_flag (Common.to_gctx com)
 			),"jvm"
 		| Python ->
-			Genpy.generate,"python"
+			(fun com ->
+				Genpy.generate (Common.to_gctx com)
+			),"python"
 		| Hl ->
 			(fun com ->
 				Genhl.generate (Common.to_gctx com)
