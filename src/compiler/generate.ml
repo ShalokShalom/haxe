@@ -176,7 +176,9 @@ let generate ctx tctx ext actx =
 			in
 			Genswf.generate header,"swf"
 		| Neko ->
-			Genneko.generate,"neko"
+			(fun com ->
+				Genneko.generate com.neko_lib_paths (Common.to_gctx com)
+			),"neko"
 		| Js ->
 			(fun com ->
 				Genjs.generate com.js_gen (Common.to_gctx com)

@@ -418,13 +418,12 @@ end
 	Build a default safe-cast expression :
 	{ var $t = <e>; if( Std.is($t,<t>) ) $t else throw "Class cast error"; }
 *)
-let default_cast ?(vtmp="$t") com e texpr t p =
-	let api = com.basic in
+let default_cast ?(vtmp="$t") api std e texpr t p =
 	let vtmp = alloc_var VGenerated vtmp e.etype e.epos in
 	let var = mk (TVar (vtmp,Some e)) api.tvoid p in
 	let vexpr = mk (TLocal vtmp) e.etype p in
 	let texpr = Texpr.Builder.make_typeexpr texpr p in
-	let is = Texpr.Builder.resolve_and_make_static_call com.std "isOfType" [vexpr;texpr] p in
+	let is = Texpr.Builder.resolve_and_make_static_call std "isOfType" [vexpr;texpr] p in
 	let enull = Texpr.Builder.make_null vexpr.etype p in
 	let eop = Texpr.Builder.binop OpEq vexpr enull api.tbool p in
 	let echeck = Texpr.Builder.binop OpBoolOr is eop api.tbool p in

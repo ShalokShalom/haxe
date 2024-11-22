@@ -955,7 +955,8 @@ module Transformer = struct
 			let r = { a_expr with eexpr = TArrayDecl exprs } in
 			lift_expr ae.a_next_id ~blocks:blocks r
 		| (is_value, TCast(e1,Some mt)) ->
-			let e = Codegen.default_cast ~vtmp:(ae.a_next_id()) (match !como with Some com -> com | None -> die "" __LOC__) e1 mt ae.a_expr.etype ae.a_expr.epos in
+			let com = (match !como with Some com -> com | None -> die "" __LOC__) in
+			let e = Codegen.default_cast ~vtmp:(ae.a_next_id()) com.basic com.std e1 mt ae.a_expr.etype ae.a_expr.epos in
 			transform_expr ae.a_next_id ~is_value:is_value e
 		| (is_value, TCast(e,None)) ->
 			let e = trans is_value [] e in

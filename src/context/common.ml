@@ -450,6 +450,7 @@ let to_gctx com = {
 		| Flash -> (com.native_libs.swf_libs  :> NativeLibraries.native_library_base list)
 		| _ -> []);
 	include_files = com.include_files;
+	std = com.std;
 }
 
 let enter_stage com stage =
