@@ -49,6 +49,9 @@ let defined_value_safe ?default com v =
 let raw_defined gctx v =
 	Define.raw_defined gctx.defines v
 
+let find_file ctx f =
+	(ctx.class_paths#find_file f).file
+
 let add_feature gctx f =
 	Hashtbl.replace gctx.features f true
 

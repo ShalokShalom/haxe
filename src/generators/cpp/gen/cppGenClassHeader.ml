@@ -1,7 +1,6 @@
 open Ast
 open Type
 open Error
-open Common
 open Globals
 open CppStrings
 open CppExprUtils
@@ -30,7 +29,7 @@ let gen_member_def ctx class_def is_static is_interface field =
           output (gen_args args);
           output (if not is_static then ")=0;\n" else ");\n");
           if reflective class_def field then
-            if Common.defined ctx.ctx_common Define.DynamicInterfaceClosures
+            if Gctx.defined ctx.ctx_common Define.DynamicInterfaceClosures
             then
               output
                 ("\t\tinline ::Dynamic " ^ remap_name
@@ -96,7 +95,7 @@ let gen_member_def ctx class_def is_static is_interface field =
            let return_type = type_to_string function_def.tf_type in
            (if (not is_static) && not nonVirtual then
               let scriptable =
-                Common.defined ctx.ctx_common Define.Scriptable
+                Gctx.defined ctx.ctx_common Define.Scriptable
               in
               if (not (is_internal_member field.cf_name)) && not scriptable then
                 let key =
@@ -202,7 +201,7 @@ let generate baseCtx class_def =
   let nativeGen = Meta.has Meta.NativeGen class_def.cl_meta in
   let smart_class_name = snd class_path in
   let scriptable =
-    Common.defined common_ctx Define.Scriptable && not class_def.cl_private
+    Gctx.defined common_ctx Define.Scriptable && not class_def.cl_private
   in
   let class_name = class_name class_def in
   let ptr_name = class_pointer class_def in
@@ -220,7 +219,7 @@ let generate baseCtx class_def =
   let debug =
     if
       Meta.has Meta.NoDebug class_def.cl_meta
-      || Common.defined baseCtx.ctx_common Define.NoDebug
+      || Gctx.defined baseCtx.ctx_common Define.NoDebug
     then 0
     else 1
   in
@@ -299,7 +298,7 @@ let generate baseCtx class_def =
   output_h "\n\n";
   output_h (get_class_code class_def Meta.HeaderNamespaceCode);
 
-  let extern_class = Common.defined common_ctx Define.DllExport in
+  let extern_class = Gctx.defined common_ctx Define.DllExport in
   let attribs =
     "HXCPP_" ^ (if extern_class then "EXTERN_" else "") ^ "CLASS_ATTRIBUTES"
   in

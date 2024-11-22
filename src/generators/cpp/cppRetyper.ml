@@ -2,7 +2,6 @@ open Extlib_leftovers
 open Ast
 open Type
 open Error
-open Common
 open Globals
 open CppExprUtils
 open CppTypeUtils
@@ -195,7 +194,7 @@ let expression ctx request_type function_args function_type expression_tree forI
   let file_id = ctx.ctx_file_id in
   let function_return_type = ref (cpp_type_of function_type) in
   let loop_stack = ref [] in
-  let forCppia = Common.defined ctx.ctx_common Define.Cppia in
+  let forCppia = Gctx.defined ctx.ctx_common Define.Cppia in
   let alloc_file_id () =
     incr file_id;
     !file_id

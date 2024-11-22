@@ -1,7 +1,6 @@
 open Ast
 open Type
 open Error
-open Common
 open Globals
 open CppStrings
 open CppExprUtils
@@ -20,7 +19,7 @@ let generate baseCtx enum_def =
   let remap_class_name = ("::" ^ (join_class_path_remap class_path "::") )  in
   let cpp_file         = new_placed_cpp_file common_ctx class_path in
   let output_cpp       = (cpp_file#write) in
-  let debug            = if (Meta.has Meta.NoDebug enum_def.e_meta) || ( Common.defined common_ctx Define.NoDebug) then 0 else 1 in
+  let debug            = if (Meta.has Meta.NoDebug enum_def.e_meta) || ( Gctx.defined common_ctx Define.NoDebug) then 0 else 1 in
 
   let ctx = file_context baseCtx cpp_file debug false in
   let strq = strq ctx.ctx_common in
@@ -209,4 +208,4 @@ let generate baseCtx enum_def =
   end_namespace output_h class_path;
 
   end_header_file output_h def_string;
-  h_file#close 
+  h_file#close

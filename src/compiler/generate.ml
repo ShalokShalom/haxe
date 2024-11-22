@@ -194,7 +194,9 @@ let generate ctx tctx ext actx =
 				Genphp7.generate (Common.to_gctx com)
 			),"php"
 		| Cpp ->
-			Gencpp.generate,"cpp"
+			(fun com ->
+				Gencpp.generate (Common.to_gctx com)
+			),"cpp"
 		| Jvm ->
 			(fun com ->
 				Genjvm.generate actx.jvm_flag (Common.to_gctx com)

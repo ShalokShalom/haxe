@@ -1,7 +1,6 @@
 open Ast
 open Type
 open Error
-open Common
 open Globals
 open CppStrings
 open CppExprUtils
@@ -301,7 +300,7 @@ let generate baseCtx class_def =
   let output_cpp = cpp_file#write in
   let strq = strq ctx.ctx_common in
   let scriptable =
-    Common.defined common_ctx Define.Scriptable && not class_def.cl_private
+    Gctx.defined common_ctx Define.Scriptable && not class_def.cl_private
   in
 
   let class_super_name =
@@ -690,7 +689,7 @@ let generate baseCtx class_def =
       if
         Meta.has Meta.NativeProperty class_def.cl_meta
         || Meta.has Meta.NativeProperty field.cf_meta
-        || Common.defined common_ctx Define.ForceNativeProperty
+        || Gctx.defined common_ctx Define.ForceNativeProperty
       then "inCallProp != ::hx::paccNever"
       else "inCallProp == ::hx::paccAlways"
     in
@@ -1114,7 +1113,7 @@ let generate baseCtx class_def =
         if return_type <> "void" then output_cpp "return null();";
         output_cpp "}\n";
         let dynamic_interface_closures =
-          Common.defined baseCtx.ctx_common Define.DynamicInterfaceClosures
+          Gctx.defined baseCtx.ctx_common Define.DynamicInterfaceClosures
         in
         if has_class_flag class_def CInterface && not dynamic_interface_closures
         then
