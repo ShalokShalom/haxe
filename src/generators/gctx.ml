@@ -28,6 +28,7 @@ type t = {
 	types : Type.module_type list;
 	resources : (string,string) Hashtbl.t;
 	native_libs : NativeLibraries.native_library_base list;
+	include_files : (string * string) list;
 }
 
 let defined com s =
@@ -47,11 +48,17 @@ let defined_value_safe ?default com v =
 let raw_defined gctx v =
 	Define.raw_defined gctx.defines v
 
+let add_feature gctx f =
+	Hashtbl.replace gctx.features f true
+
 let has_dce gctx =
 	try
 		Define.defined_value gctx.defines Define.Dce <> "no"
 with Not_found ->
 	false
+
+let is_directly_used gctx meta =
+	not (has_dce gctx) || Meta.has Meta.DirectlyUsed meta
 
 let rec has_feature gctx f =
 	try
@@ -91,8 +98,3 @@ let get_entry_point gctx =
 		let e = Option.get gctx.main.main_expr in (* must be present at this point *)
 		(snd path, c, e)
 	) gctx.main.main_class
-
-let map_source_header com f =
-	match defined_value_safe com Define.SourceHeader with
-	| "" -> ()
-	| s -> f s

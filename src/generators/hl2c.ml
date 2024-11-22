@@ -345,7 +345,7 @@ let short_digest str =
 let open_file ctx file =
 	if ctx.curfile <> "" then close_file ctx;
 	if file <> "hlc.json" then
-		Gctx.map_source_header ctx.gcon (fun s -> define ctx (sprintf "// %s" s));
+		Gctx_todo.map_source_header ctx.gcon.defines (fun s -> define ctx (sprintf "// %s" s));
 	ctx.curfile <- file;
 	ctx.fun_index <- 0;
 	ctx.file_prefix <- (short_digest file) ^ "_"

@@ -1408,7 +1408,7 @@ let gen_cpp_ast_expression_tree ctx class_name func_name function_args
           out spacer;
           writer#end_block)
     | CppCode (value, exprs) ->
-        Codegen.interpolate_code ctx.ctx_common (format_code value) exprs out
+        Codegen.interpolate_code ctx.ctx_common.error (format_code value) exprs out
           (fun e -> gen e)
           expr.cpppos
     | CppTCast (expr, cppType) -> (

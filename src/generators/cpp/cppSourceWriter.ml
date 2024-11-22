@@ -166,7 +166,7 @@ let new_source_file common_ctx base_dir sub_dir extension class_path =
   let file =
     cached_source_writer common_ctx (full_dir ^ "/" ^ snd class_path ^ extension)
   in
-  Codegen.map_source_header common_ctx (fun s ->
+  Gctx_todo.map_source_header common_ctx.defines (fun s ->
       file#write_h (Printf.sprintf "// %s\n" s));
   file
 

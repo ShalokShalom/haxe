@@ -178,7 +178,9 @@ let generate ctx tctx ext actx =
 		| Neko ->
 			Genneko.generate,"neko"
 		| Js ->
-			Genjs.generate,"js"
+			(fun com ->
+				Genjs.generate com.js_gen (Common.to_gctx com)
+			),"js"
 		| Lua ->
 			Genlua.generate,"lua"
 		| Php ->

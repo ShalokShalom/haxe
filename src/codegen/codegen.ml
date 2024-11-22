@@ -453,12 +453,12 @@ module UnificationCallback = struct
 			List.map (fun e -> f e t_dynamic) el
 end;;
 
-let interpolate_code com code tl f_string f_expr p =
+let interpolate_code error code tl f_string f_expr p =
 	let exprs = Array.of_list tl in
 	let i = ref 0 in
 	let err msg =
 		let pos = { p with pmin = p.pmin + !i } in
-		com.error msg pos
+		error msg pos
 	in
 	let regex = Str.regexp "[{}]" in
 	let rec loop m = match m with
@@ -486,12 +486,6 @@ let interpolate_code com code tl f_string f_expr p =
 			loop tl
 	in
 	loop (Str.full_split regex code)
-
-let map_source_header com f =
-	match Common.defined_value_safe com Define.SourceHeader with
-	| "" -> ()
-	| s -> f s
-
 
 (* Static extensions for classes *)
 module ExtClass = struct

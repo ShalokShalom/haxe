@@ -445,10 +445,11 @@ let to_gctx com = {
 	main = com.main;
 	types = com.types;
 	resources = com.resources;
-	native_libs = match com.platform with
+	native_libs = (match com.platform with
 		| Jvm -> (com.native_libs.java_libs :> NativeLibraries.native_library_base list)
 		| Flash -> (com.native_libs.swf_libs  :> NativeLibraries.native_library_base list)
-		| _ -> [];
+		| _ -> []);
+	include_files = com.include_files;
 }
 
 let enter_stage com stage =
@@ -540,9 +541,6 @@ let defines_for_external ctx =
 			| split -> PMap.add (String.concat "-" split) v added_underscore;
 	) ctx.defines.values PMap.empty
 
-let get_es_version com =
-	try int_of_string (defined_value com Define.JsEs) with _ -> 0
-
 let short_platform_name = function
 	| Cross -> "x"
 	| Js -> "js"
@@ -605,7 +603,7 @@ let get_config com =
 		(* impossible to reach. see update_platform_config *)
 		raise Exit
 	| Js ->
-		let es6 = get_es_version com >= 6 in
+		let es6 = Gctx_todo.get_es_version com.defines >= 6 in
 		{
 			default_config with
 			pf_static = false;

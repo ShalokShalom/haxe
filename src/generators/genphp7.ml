@@ -2021,7 +2021,7 @@ class code_writer (ctx:php_generator_context) hx_type_path php_name =
 						| "__php__" ->
 							(match expr.eexpr with
 								| TConst (TString php) ->
-									Codegen.interpolate_code ctx.pgc_common php args self#write self#write_expr self#pos
+									Codegen.interpolate_code ctx.pgc_common.error php args self#write self#write_expr self#pos
 								| _ -> fail self#pos __LOC__
 							)
 						| "__call__" ->
@@ -2445,7 +2445,7 @@ class code_writer (ctx:php_generator_context) hx_type_path php_name =
 						)
 						args
 					in
-					Codegen.interpolate_code ctx.pgc_common php args self#write self#write_expr self#pos
+					Codegen.interpolate_code ctx.pgc_common.error php args self#write self#write_expr self#pos
 				| _ -> ctx.pgc_common.error "First argument of php.Syntax.code() must be a constant string." self#pos
 		(**
 			Writes error suppression operator (for `php.Syntax.suppress()`)
@@ -3045,7 +3045,7 @@ class virtual type_builder ctx (wrapper:type_wrapper) =
 			writer#indent 0;
 			writer#write_line "<?php";
 			writer#write_line "/**";
-			Codegen.map_source_header ctx.pgc_common (fun s -> writer#write_line (" * " ^ s));
+			Gctx_todo.map_source_header ctx.pgc_common.defines (fun s -> writer#write_line (" * " ^ s));
 			if ctx.pgc_common.debug then writer#write_line (" * Haxe source file: " ^ self#get_source_file);
 			writer#write_line " */";
 			writer#write "\n";

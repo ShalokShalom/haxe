@@ -458,7 +458,7 @@ and gen_call ctx e el =
      | TIdent "__lua__", [{ eexpr = TConst (TString code) }] ->
          spr ctx (String.concat "\n" (ExtString.String.nsplit code "\r\n"))
      | TIdent "__lua__", { eexpr = TConst (TString code); epos = p } :: tl ->
-         Codegen.interpolate_code ctx.com code tl (spr ctx) (gen_expr ctx) p
+         Codegen.interpolate_code ctx.com.error code tl (spr ctx) (gen_expr ctx) p
      | TIdent "__type__",  [o] ->
          spr ctx "type";
          gen_paren ctx [o];
@@ -2009,7 +2009,7 @@ let transform_multireturn ctx = function
 let generate com =
     let ctx = alloc_ctx com in
 
-    Codegen.map_source_header com (fun s -> print ctx "-- %s\n" s);
+    Gctx_todo.map_source_header com.defines (fun s -> print ctx "-- %s\n" s);
 
     if has_feature ctx "Class" || has_feature ctx "Type.getClassName" then add_feature ctx "lua.Boot.isClass";
     if has_feature ctx "Enum" || has_feature ctx "Type.getEnumName" then add_feature ctx "lua.Boot.isEnum";
@@ -2214,7 +2214,7 @@ let generate com =
         println ctx "return _hx_exports";
 
     (match ctx.smap with
-    | Some smap -> write_mappings ctx.com smap ""
+    | Some smap -> write_mappings (Common.to_gctx ctx.com) smap ""
     | None -> try Sys.remove (com.file ^ ".map") with _ -> ());
 
     let ch = open_out_bin com.file in
