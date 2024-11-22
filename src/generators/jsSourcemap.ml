@@ -19,7 +19,6 @@
 open Extlib_leftovers
 open Globals
 open Type
-open Common
 
 type sourcemap = {
 	sources : (string) DynArray.t;

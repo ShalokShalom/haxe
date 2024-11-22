@@ -182,7 +182,9 @@ let generate ctx tctx ext actx =
 				Genjs.generate com.js_gen (Common.to_gctx com)
 			),"js"
 		| Lua ->
-			Genlua.generate,"lua"
+			(fun com ->
+				Genlua.generate (Common.to_gctx com)
+			),"lua"
 		| Php ->
 			Genphp7.generate,"php"
 		| Cpp ->
