@@ -1,5 +1,14 @@
 open Globals
 open Type
+open Warning
+
+type context_main = {
+	mutable main_class : path option;
+	mutable main_expr : texpr option;
+}
+
+type warning_function = ?depth:int -> ?from_macro:bool -> warning -> Warning.warning_option list list -> string -> pos -> unit
+type error_function = ?depth:int -> string -> pos -> unit
 
 type t = {
 	platform : platform;
@@ -7,16 +16,17 @@ type t = {
 	class_paths : ClassPaths.class_paths;
 	run_command : string -> int;
 	run_command_args : string -> string list -> int;
+	warning : warning_function;
+	error : error_function;
 	basic : basic_types;
 	debug : bool;
 	file : string;
 	version : int;
 	features : (string,bool) Hashtbl.t;
 	modules : Type.module_def list;
-	main : Type.texpr option;
+	main : context_main;
 	types : Type.module_type list;
 	resources : (string,string) Hashtbl.t;
-	main_class : path option;
 	native_libs : NativeLibraries.native_library_base list;
 }
 
@@ -78,9 +88,9 @@ let get_entry_point gctx =
 			| Some c when (PMap.mem "main" c.cl_statics) -> c
 			| _ -> Option.get (ExtList.List.find_map (fun t -> match t with TClassDecl c when c.cl_path = path -> Some c | _ -> None) m.m_types)
 		in
-		let e = Option.get gctx.main in (* must be present at this point *)
+		let e = Option.get gctx.main.main_expr in (* must be present at this point *)
 		(snd path, c, e)
-	) gctx.main_class
+	) gctx.main.main_class
 
 let map_source_header com f =
 	match defined_value_safe com Define.SourceHeader with

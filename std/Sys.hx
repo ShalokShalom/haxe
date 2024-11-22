@@ -43,8 +43,6 @@ extern class Sys {
 		This does not include the interpreter or the name of the program file.
 
 		(java)(eval) On Windows, non-ASCII Unicode arguments will not work correctly.
-
-		(cs) Non-ASCII Unicode arguments will not work correctly.
 	**/
 	static function args():Array<String>;
 
@@ -84,7 +82,7 @@ extern class Sys {
 	static function sleep(seconds:Float):Void;
 
 	/**
-		Changes the current time locale, which will affect `DateTools.format` date formating.
+		Changes the current time locale, which will affect `DateTools.format` date formatting.
 		Returns `true` if the locale was successfully changed.
 	**/
 	static function setTimeLocale(loc:String):Bool;

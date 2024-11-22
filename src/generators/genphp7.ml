@@ -1020,7 +1020,7 @@ class class_wrapper (cls) =
 *)
 class enum_wrapper (enm) =
 	object (self)
-		inherit type_wrapper enm.e_path enm.e_meta (not enm.e_extern)
+		inherit type_wrapper enm.e_path enm.e_meta (not (has_enum_flag enm EnExtern))
 		(**
 			Indicates if class initialization method should be executed upon class loaded
 		*)
@@ -4038,7 +4038,7 @@ class generator (ctx:php_generator_context) =
 			Returns PHP code for entry point
 		*)
 		method private get_entry_point : (string * string) option =
-			match ctx.pgc_common.main with
+			match ctx.pgc_common.main.main_expr with
 				| None -> None
 				| Some expr ->
 					let writer = new code_writer ctx ([], "") "" in

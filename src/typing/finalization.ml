@@ -9,7 +9,7 @@ open Typecore
 (* FINALIZATION *)
 
 let get_main ctx types =
-	match ctx.com.main_class with
+	match ctx.com.main.main_class with
 	| None -> None
 	| Some path ->
 		let p = null_pos in
@@ -79,7 +79,7 @@ let get_main ctx types =
 		Some main
 
 let finalize ctx =
-	flush_pass ctx PFinal ("final",[]);
+	flush_pass ctx.g PFinal ("final",[]);
 	match ctx.com.callbacks#get_after_typing with
 		| [] ->
 			()
@@ -91,7 +91,7 @@ let finalize ctx =
 					()
 				| new_types ->
 					List.iter (fun f -> f new_types) fl;
-					flush_pass ctx PFinal ("final",[]);
+					flush_pass ctx.g PFinal ("final",[]);
 					loop all_types
 			in
 			loop []
