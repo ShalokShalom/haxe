@@ -174,41 +174,23 @@ let generate ctx tctx ext actx =
 			with Not_found ->
 				None
 			in
-			(fun com ->
-				Genswf.generate header com.Common.native_libs.swf_libs com.Common.flash_version (Common.to_gctx com)
-			),"swf"
+			Genswf.generate header com.Common.native_libs.swf_libs com.Common.flash_version,"swf"
 		| Neko ->
-			(fun com ->
-				Genneko.generate com.neko_lib_paths (Common.to_gctx com)
-			),"neko"
+			Genneko.generate com.neko_lib_paths,"neko"
 		| Js ->
-			(fun com ->
-				Genjs.generate com.js_gen (Common.to_gctx com)
-			),"js"
+			Genjs.generate com.js_gen,"js"
 		| Lua ->
-			(fun com ->
-				Genlua.generate (Common.to_gctx com)
-			),"lua"
+			Genlua.generate,"lua"
 		| Php ->
-			(fun com ->
-				Genphp7.generate (Common.to_gctx com)
-			),"php"
+			Genphp7.generate,"php"
 		| Cpp ->
-			(fun com ->
-				Gencpp.generate (Common.to_gctx com)
-			),"cpp"
+			Gencpp.generate,"cpp"
 		| Jvm ->
-			(fun com ->
-				Genjvm.generate actx.jvm_flag (Common.to_gctx com)
-			),"jvm"
+			Genjvm.generate actx.jvm_flag,"jvm"
 		| Python ->
-			(fun com ->
-				Genpy.generate (Common.to_gctx com)
-			),"python"
+			Genpy.generate,"python"
 		| Hl ->
-			(fun com ->
-				Genhl.generate (Common.to_gctx com)
-			),"hl"
+			Genhl.generate,"hl"
 		| Eval ->
 			(fun _ -> MacroContext.interpret tctx),"eval"
 		| Cross
@@ -219,7 +201,7 @@ let generate ctx tctx ext actx =
 		else begin
 			Common.log com ("Generating " ^ name ^ ": " ^ com.file);
 			let t = Timer.timer ["generate";name] in
-			generate com;
+			generate (Common.to_gctx com);
 			t()
 		end
 	end
