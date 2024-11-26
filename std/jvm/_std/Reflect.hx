@@ -207,6 +207,7 @@ class Reflect {
 	}
 
 	@:overload(function(f:Array<Dynamic>->Void):Dynamic {})
+	@:haxe.warning("-WMetaOverload")
 	public static function makeVarArgs(f:Array<Dynamic>->Dynamic):Dynamic {
 		return new jvm.Closure.VarArgs((cast f : jvm.Function));
 	}
