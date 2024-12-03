@@ -78,7 +78,7 @@ type context = {
 	mutable file_prefix : string;
 	mutable fun_index : int;
 	mutable type_module : (ttype, code_module) PMap.t;
-	gcon : Common.context;
+	gcon : Gctx.t;
 }
 
 let sprintf = Printf.sprintf
@@ -117,7 +117,7 @@ let s_comp = function
 let core_types =
 	let vp = { vfields = [||]; vindex = PMap.empty } in
 	let ep = { ename = ""; eid = 0; eglobal = None; efields = [||] } in
-	[HVoid;HUI8;HUI16;HI32;HI64;HF32;HF64;HBool;HBytes;HDyn;HFun ([],HVoid);HObj null_proto;HArray;HType;HRef HVoid;HVirtual vp;HDynObj;HAbstract ("",0);HEnum ep;HNull HVoid;HMethod ([],HVoid);HStruct null_proto]
+	[HVoid;HUI8;HUI16;HI32;HI64;HF32;HF64;HBool;HBytes;HDyn;HFun ([],HVoid);HObj null_proto;HArray HDyn;HType;HRef HVoid;HVirtual vp;HDynObj;HAbstract ("",0);HEnum ep;HNull HVoid;HMethod ([],HVoid);HStruct null_proto]
 
 let tname str =
 	let n = String.concat "__" (ExtString.String.nsplit str ".") in
@@ -125,7 +125,7 @@ let tname str =
 
 let is_gc_ptr = function
 	| HVoid | HUI8 | HUI16 | HI32 | HI64 | HF32 | HF64 | HBool | HType | HRef _ | HMethod _ | HPacked _ -> false
-	| HBytes | HDyn | HFun _ | HObj _ | HArray | HVirtual _ | HDynObj | HAbstract _ | HEnum _ | HNull _ | HStruct _ -> true
+	| HBytes | HDyn | HFun _ | HObj _ | HArray _ | HVirtual _ | HDynObj | HAbstract _ | HEnum _ | HNull _ | HStruct _ -> true
 
 let is_ptr = function
 	| HVoid | HUI8 | HUI16 | HI32 | HI64 | HF32 | HF64 | HBool -> false
@@ -144,7 +144,7 @@ let rec ctype_no_ptr = function
 	| HDyn -> "vdynamic",1
 	| HFun _ -> "vclosure",1
 	| HObj p | HStruct p -> tname p.pname,0
-	| HArray -> "varray",1
+	| HArray _ -> "varray",1
 	| HType -> "hl_type",1
 	| HRef t -> let s,i = ctype_no_ptr t in s,i + 1
 	| HVirtual _ -> "vvirtual",1
@@ -192,7 +192,7 @@ let type_id t =
 	| HDyn -> "HDYN"
 	| HFun _ -> "HFUN"
 	| HObj _ -> "HOBJ"
-	| HArray -> "HARRAY"
+	| HArray _ -> "HARRAY"
 	| HType -> "HTYPE"
 	| HRef _ -> "HREF"
 	| HVirtual _ -> "HVIRTUAL"
@@ -237,7 +237,7 @@ let define ctx s =
 
 let rec define_type ctx t =
 	match t with
-	| HVoid | HUI8 | HUI16 | HI32 | HI64 | HF32 | HF64 | HBool | HBytes | HDyn | HArray | HType | HDynObj | HNull _ | HRef _ -> ()
+	| HVoid | HUI8 | HUI16 | HI32 | HI64 | HF32 | HF64 | HBool | HBytes | HDyn | HArray _ | HType | HDynObj | HNull _ | HRef _ -> ()
 	| HAbstract _ ->
 		define ctx "#include <hl/natives.h>";
 	| HFun (args,ret) | HMethod (args,ret) ->
@@ -345,7 +345,7 @@ let short_digest str =
 let open_file ctx file =
 	if ctx.curfile <> "" then close_file ctx;
 	if file <> "hlc.json" then
-		Codegen.map_source_header ctx.gcon (fun s -> define ctx (sprintf "// %s" s));
+		Gctx.map_source_header ctx.gcon.defines (fun s -> define ctx (sprintf "// %s" s));
 	ctx.curfile <- file;
 	ctx.fun_index <- 0;
 	ctx.file_prefix <- (short_digest file) ^ "_"
@@ -744,7 +744,7 @@ let generate_function ctx f =
 			match rtype a, rtype b with
 			| (HUI8 | HUI16 | HI32 | HF32 | HF64 | HBool | HI64), (HUI8 | HUI16 | HI32 | HF32 | HF64 | HBool | HI64) ->
 				phys_compare()
-			| HBytes, HBytes | HArray,HArray ->
+			| HBytes, HBytes | HArray _,HArray _ ->
 				phys_compare()
 			| HType, HType ->
 				sexpr "if( hl_same_type(%s,%s) %s 0 ) {} else goto %s" (reg a) (reg b) (s_comp op) (label d)
@@ -1095,7 +1095,7 @@ let generate_function ctx f =
 			sexpr "hl_assert()"
 		| ORefData (r,d) ->
 			(match rtype d with
-			| HArray ->
+			| HArray _ ->
 				sexpr "%s = (%s)hl_aptr(%s,void*)" (reg r) (ctype (rtype r)) (reg d)
 			| _ ->
 				Globals.die "" __LOC__)
@@ -1138,7 +1138,7 @@ let make_types_idents htypes =
 	let types_descs = ref PMap.empty in
 	let rec make_desc t =
 		match t with
-		| HVoid | HUI8 | HUI16 | HI32 | HI64 | HF32 | HF64 | HBool | HBytes | HDyn | HArray | HType | HRef _ | HDynObj | HNull _ ->
+		| HVoid | HUI8 | HUI16 | HI32 | HI64 | HF32 | HF64 | HBool | HBytes | HDyn | HArray _ | HType | HRef _ | HDynObj | HNull _ ->
 			DSimple t
 		| HFun (tl,t) ->
 			DFun (List.map make_desc tl, make_desc t, true)
@@ -1181,6 +1181,8 @@ let make_types_idents htypes =
 			"t$nul_" ^ tstr t
 		| DSimple (HRef t) ->
 			"t$ref_" ^ (match make_desc t with DSimple _ -> tstr t | d -> desc_string d)
+		| DSimple (HArray t) ->
+			"t$array_" ^ (desc_string (make_desc t))
 		| DSimple t ->
 			"t$_" ^ tstr t
 		| DFun _ ->
@@ -1459,7 +1461,7 @@ let write_c com file (code:code) gnames =
 	let bnames = Array.map (fun b -> "bytes$" ^ short_digest (Digest.to_hex (Digest.bytes b))) code.bytes in
 
 	let ctx = {
-		version = com.Common.version;
+		version = com.Gctx.version;
 		out = Buffer.create 1024;
 		tabs = "";
 		hlcode = code;
@@ -1574,7 +1576,7 @@ let write_c com file (code:code) gnames =
 	in
 	Array.iteri (fun i str ->
 		if String.length str >= string_data_limit then begin
-			let s = Common.utf8_to_utf16 str true in
+			let s = StringHelper.utf8_to_utf16 str true in
 			sline "// %s..." (String.escaped (String.sub str 0 (string_data_limit-4)));
 			output ctx (Printf.sprintf "vbyte string$%s[] = {" (short_digest str));
 			output_bytes (output ctx) s;

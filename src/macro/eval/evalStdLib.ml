@@ -613,9 +613,12 @@ module StdContext = struct
 		else raise (EvalDebugMisc.BreakHere)
 	)
 
-	let callMacroApi = vfun1 (fun f ->
+	let callMacroApi = vfun1 (fun f  ->
 		let f = decode_string f in
-		Hashtbl.find GlobalState.macro_lib f
+		try
+			Hashtbl.find GlobalState.macro_lib f
+		with Not_found ->
+			exc_string ("Could not find macro function \"" ^ f ^ "\"")
 	)
 
 	let plugins = ref PMap.empty
@@ -2441,7 +2444,7 @@ end
 module StdStringTools = struct
 	let url_encode s =
 		let b = Buffer.create 0 in
-		Common.url_encode s (Buffer.add_char b);
+		StringHelper.url_encode s (Buffer.add_char b);
 		Buffer.contents b
 
 	let fastCodeAt = StdString.charCodeAt
@@ -3008,7 +3011,7 @@ module StdType = struct
 			| VEnumValue ve ->
 				7,[|get_static_prototype_as_value ctx ve.epath null_pos|]
 			| VLazy f ->
-				loop (!f())
+				loop (Lazy.force f)
 			| VInt64 _ | VUInt64 _ | VNativeString _ | VHandle _ -> 8,[||]
 		in
 		let i,vl = loop v in

@@ -132,7 +132,7 @@ let get_type = function
 	| VObj o -> Some (HObj o.oproto.pclass)
 	| VDynObj _ -> Some HDynObj
 	| VVirtual v -> Some (HVirtual v.vtype)
-	| VArray _ -> Some HArray
+	| VArray (_,t) -> Some (HArray t)
 	| VClosure (f,None) -> Some (match f with FFun f -> f.ftype | FNativeFun (_,_,t) -> t)
 	| VClosure (f,Some _) -> Some (match f with FFun { ftype = HFun(_::args,ret) } | FNativeFun (_,_,HFun(_::args,ret)) -> HFun (args,ret) | _ -> Globals.die "" __LOC__)
 	| VVarArgs _ -> Some (HFun ([],HDyn))
@@ -158,7 +158,7 @@ let rec is_compatible v t =
 	| v, HNull t -> is_compatible v t
 	| v, HDyn -> v_dynamic v
 	| VType _, HType -> true
-	| VArray _, HArray -> true
+	| VArray _, HArray _ -> true
 	| VDynObj _, HDynObj -> true
 	| VVirtual v, HVirtual _ -> safe_cast (HVirtual v.vtype) t
 	| VRef (_,t1), HRef t2 -> tsame t1 t2
@@ -292,7 +292,7 @@ let fstr = function
 	| FFun f -> "function@" ^ string_of_int f.findex
 	| FNativeFun (s,_,_) -> "native[" ^ s ^ "]"
 
-let caml_to_hl str = Common.utf8_to_utf16 str true
+let caml_to_hl str = StringHelper.utf8_to_utf16 str true
 
 let hash ctx str =
 	let h = hl_hash str in
@@ -317,7 +317,7 @@ let utf16_iter f s =
 	loop 0
 
 let utf16_char buf c =
-	Common.utf16_add buf (int_of_char c)
+	StringHelper.utf16_add buf (int_of_char c)
 
 let hl_to_caml str =
 	let utf16_eof s =
@@ -526,7 +526,7 @@ and dyn_call ctx v args tret =
 		null_access()
 	| VVarArgs (f,a) ->
 		let arr = VArray (Array.of_list (List.map (fun (v,t) -> make_dyn v t) args),HDyn) in
-		dyn_call ctx (VClosure (f,a)) [arr,HArray] tret
+		dyn_call ctx (VClosure (f,a)) [arr,HArray HDyn] tret
 	| _ ->
 		throw_msg ctx (vstr_d ctx v ^ " cannot be called")
 
@@ -1073,7 +1073,7 @@ let interp ctx f args =
 					| HDyn -> 9
 					| HFun _ -> 10
 					| HObj _ -> 11
-					| HArray -> 12
+					| HArray _ -> 12
 					| HType -> 13
 					| HRef _ -> 14
 					| HVirtual _ -> 15
@@ -1776,9 +1776,9 @@ let load_native ctx lib name t =
 						if c >= int_of_char 'a' && c <= int_of_char 'z' then c + int_of_char 'A' - int_of_char 'a'
 						else c
 					in
-					Common.utf16_add buf c
+					StringHelper.utf16_add buf c
 				) (String.sub s (int pos) ((int len) lsl 1));
-				Common.utf16_add buf 0;
+				StringHelper.utf16_add buf 0;
 				VBytes (Buffer.contents buf)
 			| _ -> Globals.die "" __LOC__)
 		| "ucs2_lower" ->
@@ -1790,9 +1790,9 @@ let load_native ctx lib name t =
 						if c >= int_of_char 'A' && c <= int_of_char 'Z' then c + int_of_char 'a' - int_of_char 'A'
 						else c
 					in
-					Common.utf16_add buf c
+					StringHelper.utf16_add buf c
 				) (String.sub s (int pos) ((int len) lsl 1));
-				Common.utf16_add buf 0;
+				StringHelper.utf16_add buf 0;
 				VBytes (Buffer.contents buf)
 			| _ -> Globals.die "" __LOC__)
 		| "url_encode" ->
@@ -1800,8 +1800,8 @@ let load_native ctx lib name t =
 			| [VBytes s; VRef (r, HI32)] ->
 				let s = hl_to_caml s in
 				let buf = Buffer.create 0 in
-				Common.url_encode s (utf16_char buf);
-				Common.utf16_add buf 0;
+				StringHelper.url_encode s (utf16_char buf);
+				StringHelper.utf16_add buf 0;
 				let str = Buffer.contents buf in
 				set_ref r (to_int (String.length str lsr 1 - 1));
 				VBytes str
@@ -2424,7 +2424,7 @@ let check comerror code =
 			| ORethrow r ->
 				reg r HDyn
 			| OGetArray (v,a,i) ->
-				(match rtype a with HAbstract ("hl_carray",_) -> () | _ -> reg a HArray);
+				(match rtype a with HAbstract ("hl_carray",_) | HArray _ -> () | _ -> reg a (HArray HDyn));
 				reg i HI32;
 				ignore(rtype v);
 			| OGetUI8 (r,b,p) | OGetUI16(r,b,p) ->
@@ -2444,7 +2444,7 @@ let check comerror code =
 				reg p HI32;
 				(match rtype v with HI32 | HI64 | HF32 | HF64 -> () | _ -> error (reg_inf r ^ " should be numeric"));
 			| OSetArray (a,i,v) ->
-				(match rtype a with HAbstract ("hl_carray",_) -> () | _ -> reg a HArray);
+				(match rtype a with HAbstract ("hl_carray",_) | HArray _ -> () | _ -> reg a (HArray HDyn));
 				reg i HI32;
 				ignore(rtype v);
             | OUnsafeCast (a,b) | OSafeCast (a,b) ->
@@ -2523,8 +2523,12 @@ let check comerror code =
 			| OAssert _ ->
 				()
 			| ORefData (r,d) ->
-				reg d HArray;
-				(match rtype r with HRef _ -> () | _ -> reg r (HRef HDyn))
+				(match rtype r with
+					| HRef t ->
+						reg d (HArray t);
+					| _ ->
+						reg d (HArray HDyn);
+						reg r (HRef HDyn))
 			| ORefOffset (r,r2,off) ->
 				(match rtype r2 with HRef _ -> () | _ -> reg r2 (HRef HDyn));
 				reg r (rtype r2);

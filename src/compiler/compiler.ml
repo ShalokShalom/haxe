@@ -233,6 +233,7 @@ module Setup = struct
 		Common.define_value com Define.HaxeVer (Printf.sprintf "%.3f" (float_of_int Globals.version /. 1000.));
 		Common.raw_define com "haxe3";
 		Common.raw_define com "haxe4";
+		Common.raw_define com "haxe5";
 		Common.define_value com Define.Haxe s_version;
 		Common.raw_define com "true";
 		Common.define_value com Define.Dce "std";
@@ -240,7 +241,7 @@ module Setup = struct
 			message ctx (make_compiler_message ~from_macro msg p depth DKCompilerMessage Information)
 		);
 		com.warning <- (fun ?(depth=0) ?(from_macro=false) w options msg p ->
-			match Warning.get_mode w (com.warning_options @ options) with
+			match Warning.get_mode w (options @ com.warning_options) with
 			| WMEnable ->
 				let wobj = Warning.warning_obj w in
 				let msg = if wobj.w_generic then
@@ -328,18 +329,19 @@ let do_type ctx mctx actx display_file_dot_path =
 let finalize_typing ctx tctx =
 	let t = Timer.timer ["finalize"] in
 	let com = ctx.com in
+	let main_module = Finalization.maybe_load_main tctx in
 	enter_stage com CFilteringStart;
 	ServerMessage.compiler_stage com;
-	let main, types, modules = run_or_diagnose ctx (fun () -> Finalization.generate tctx) in
+	let main, types, modules = run_or_diagnose ctx (fun () -> Finalization.generate tctx main_module) in
 	com.main.main_expr <- main;
 	com.types <- types;
 	com.modules <- modules;
 	t()
 
-let filter ctx tctx before_destruction =
+let filter ctx tctx ectx before_destruction =
 	let t = Timer.timer ["filters"] in
 	DeprecationCheck.run ctx.com;
-	run_or_diagnose ctx (fun () -> Filters.run tctx ctx.com.main.main_expr before_destruction);
+	run_or_diagnose ctx (fun () -> Filters.run tctx ectx ctx.com.main.main_expr before_destruction);
 	t()
 
 let compile ctx actx callbacks =
@@ -381,6 +383,7 @@ let compile ctx actx callbacks =
 		(* Actual compilation starts here *)
 		let (tctx,display_file_dot_path) = do_type ctx mctx actx display_file_dot_path in
 		DisplayProcessing.handle_display_after_typing ctx tctx display_file_dot_path;
+		let ectx = Exceptions.create_exception_context tctx in
 		finalize_typing ctx tctx;
 		let is_compilation = is_compilation com in
 		com.callbacks#add_after_save (fun () ->
@@ -392,10 +395,10 @@ let compile ctx actx callbacks =
 					()
 		);
 		if is_diagnostics com then
-			filter ctx tctx (fun () -> DisplayProcessing.handle_display_after_finalization ctx tctx display_file_dot_path)
+			filter ctx tctx ectx (fun () -> DisplayProcessing.handle_display_after_finalization ctx tctx display_file_dot_path)
 		else begin
 			DisplayProcessing.handle_display_after_finalization ctx tctx display_file_dot_path;
-			filter ctx tctx (fun () -> ());
+			filter ctx tctx ectx (fun () -> ());
 		end;
 		if ctx.has_error then raise Abort;
 		if is_compilation then Generate.check_auxiliary_output com actx;
@@ -577,6 +580,7 @@ module HighLevel = struct
 		let args = !each_args @ args in
 		let added_libs = Hashtbl.create 0 in
 		let server_mode = ref SMNone in
+		let hxml_stack = ref [] in
 		let create_context args =
 			let ctx = create (server_api.on_context_create()) args in
 			ctx
@@ -636,6 +640,11 @@ module HighLevel = struct
 			| arg :: l ->
 				match List.rev (ExtString.String.nsplit arg ".") with
 				| "hxml" :: _ :: _ when (match acc with "-cmd" :: _ | "--cmd" :: _ -> false | _ -> true) ->
+					let full_path = Extc.get_full_path arg in
+					if List.mem full_path !hxml_stack then
+						raise (Arg.Bad (Printf.sprintf "Duplicate hxml inclusion: %s" full_path))
+					else
+						hxml_stack := full_path :: !hxml_stack;
 					let acc, l = (try acc, Helper.parse_hxml arg @ l with Not_found -> (arg ^ " (file not found)") :: acc, l) in
 					loop acc l
 				| _ ->

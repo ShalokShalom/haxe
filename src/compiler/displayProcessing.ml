@@ -96,7 +96,7 @@ let process_display_configuration ctx =
 			add_diagnostics_message ?depth com s p DKCompilerMessage Information
 		);
 		com.warning <- (fun ?(depth = 0) ?from_macro w options s p ->
-			match Warning.get_mode w (com.warning_options @ options) with
+			match Warning.get_mode w (options @ com.warning_options) with
 			| WMEnable ->
 				let wobj = Warning.warning_obj w in
 				add_diagnostics_message ~depth ~code:(Some wobj.w_name) com s p DKCompilerMessage Warning
@@ -348,7 +348,7 @@ let handle_display_after_finalization ctx tctx display_file_dot_path =
 		| None -> ()
 		| Some mctx ->
 			(* We don't need a full macro flush here because we're not going to run any macros. *)
-			let _, types, modules = Finalization.generate mctx in
+			let _, types, modules = Finalization.generate mctx (Finalization.maybe_load_main mctx) in
 			mctx.Typecore.com.types <- types;
 			mctx.Typecore.com.Common.modules <- modules
 	end;

@@ -76,7 +76,7 @@ type typer_module = {
 }
 
 type typer_class = {
-	mutable curclass : tclass; (* TODO: should not be mutable *)
+	curclass : tclass;
 	mutable tthis : t;
 	mutable get_build_infos : unit -> (module_type * t list * class_field list) option;
 }
@@ -150,7 +150,7 @@ and typer_expr = {
 }
 
 and typer_field = {
-	mutable curfield : tclass_field;
+	curfield : tclass_field;
 	mutable locals : (string, tvar) PMap.t;
 	mutable vthis : tvar option;
 	mutable untyped : bool;
@@ -165,7 +165,7 @@ and typer = {
 	com : context;
 	t : basic_types;
 	g : typer_globals;
-	mutable m : typer_module;
+	m : typer_module;
 	c : typer_class;
 	f : typer_field;
 	e : typer_expr;
@@ -358,7 +358,7 @@ let type_generic_function_ref : (typer -> field_access -> (unit -> texpr) field_
 let create_context_ref : (Common.context -> ((unit -> unit) * typer) option -> typer) ref = ref (fun _ -> assert false)
 
 let warning ?(depth=0) ctx w msg p =
-	let options = (Warning.from_meta ctx.c.curclass.cl_meta) @ (Warning.from_meta ctx.f.curfield.cf_meta) in
+	let options = (Warning.from_meta ctx.f.curfield.cf_meta) @ (Warning.from_meta ctx.c.curclass.cl_meta) in
 	match Warning.get_mode w options with
 	| WMEnable ->
 		module_warning ctx.com ctx.m.curmod w options msg p
