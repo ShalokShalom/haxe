@@ -35,12 +35,21 @@ let rec s_type ctx t =
 	| TMono r ->
 		(match r.tm_type with
 		| None ->
-			begin try
-				let id = List.assq t (!ctx) in
-				if show_mono_ids then
+			let print_name id extra =
+				let s = if show_mono_ids then
 					Printf.sprintf "Unknown<%d>" id
 				else
 					"Unknown"
+				in
+				let s = s ^ extra in
+				List.fold_left (fun s modi -> match modi with
+					| MNullable _ -> Printf.sprintf "Null<%s>" s
+					| MOpenStructure -> s
+				) s r.tm_modifiers
+			in
+			begin try
+				let id = List.assq t (!ctx) in
+				print_name id ""
 			with Not_found ->
 				let id = List.length !ctx in
 				ctx := (t,id) :: !ctx;
@@ -54,10 +63,7 @@ let rec s_type ctx t =
 					let s = loop (!monomorph_classify_constraints_ref r) in
 					if s = "" then s else " : " ^ s
 				in
-				if show_mono_ids then
-					Printf.sprintf "Unknown<%d>%s" id s_const
-				else
-					Printf.sprintf "Unknown%s" s_const
+				print_name id s_const
 			end
 		| Some t -> s_type ctx t)
 	| TEnum (e,tl) ->
@@ -125,7 +131,6 @@ and s_constraint = function
 	| MMono(m,_) -> Printf.sprintf "MMono %s" (s_type_kind (TMono m))
 	| MField cf -> Printf.sprintf "MField %s" cf.cf_name
 	| MType(t,_) -> Printf.sprintf "MType %s" (s_type_kind t)
-	| MOpenStructure -> "MOpenStructure"
 	| MEmptyStructure -> "MEmptyStructure"
 
 let s_type_param s_type ttp =

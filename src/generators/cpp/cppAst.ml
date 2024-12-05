@@ -1,7 +1,4 @@
-open Extlib_leftovers
-open Ast
 open Type
-open Error
 open Globals
 
 type tcpp =

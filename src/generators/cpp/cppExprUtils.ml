@@ -1,8 +1,4 @@
-open Extlib_leftovers
-open Ast
 open Type
-open Error
-open Globals
 
 let rec remove_parens expression =
   match expression.eexpr with

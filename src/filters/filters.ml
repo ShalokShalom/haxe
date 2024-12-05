@@ -459,7 +459,7 @@ end
 
 open FilterContext
 
-let destruction tctx detail_times main locals =
+let destruction tctx ectx detail_times main locals =
 	let com = tctx.com in
 	with_timer detail_times "type 2" None (fun () ->
 		(* PASS 2: type filters pre-DCE *)
@@ -491,11 +491,11 @@ let destruction tctx detail_times main locals =
 			tctx
 			detail_times
 			(* This has to run after DCE, or otherwise its condition always holds. *)
-			["insert_save_stacks",Exceptions.insert_save_stacks]
+			["insert_save_stacks",(fun tctx -> Exceptions.insert_save_stacks tctx ectx)]
 		)
 		com.types;
 	let type_filters = [
-		Exceptions.patch_constructors; (* TODO: I don't believe this should load_instance anything at this point... *)
+		(fun tctx -> Exceptions.patch_constructors tctx ectx); (* TODO: I don't believe this should load_instance anything at this point... *)
 		(fun _ -> check_private_path com);
 		(fun _ -> Naming.apply_native_paths);
 		(fun _ -> add_rtti com);
@@ -666,7 +666,7 @@ let might_need_cf_unoptimized c cf =
 	| _ ->
 		has_class_field_flag cf CfGeneric
 
-let run tctx main before_destruction =
+let run tctx ectx main before_destruction =
 	let com = tctx.com in
 	let detail_times = (try int_of_string (Common.defined_value_safe com ~default:"0" Define.FilterTimes) with _ -> 0) in
 	let new_types = List.filter (fun t ->
@@ -719,7 +719,7 @@ let run tctx main before_destruction =
 		"Tre",if defined com Define.AnalyzerOptimize then Tre.run else (fun _ e -> e);
 		"reduce_expression",Optimizer.reduce_expression;
 		"inline_constructors",InlineConstructors.inline_constructors;
-		"Exceptions_filter",Exceptions.filter;
+		"Exceptions_filter",(fun _ -> Exceptions.filter ectx);
 		"captured_vars",(fun _ -> CapturedVars.captured_vars com);
 	] in
 	List.iter (run_expression_filters tctx detail_times filters) new_types;
@@ -765,4 +765,4 @@ let run tctx main before_destruction =
 		com.callbacks#run com.error_ext com.callbacks#get_after_save;
 	);
 	before_destruction();
-	destruction tctx detail_times main locals
+	destruction tctx ectx detail_times main locals

@@ -1,4 +1,3 @@
-open Extlib_leftovers
 open Ast
 open Type
 open Error
@@ -7,7 +6,6 @@ open CppExprUtils
 open CppTypeUtils
 open CppAst
 open CppAstTools
-open CppSourceWriter
 open CppContext
 
 let cpp_type_of = CppRetyper.cpp_type_of

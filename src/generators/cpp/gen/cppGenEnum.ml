@@ -1,11 +1,5 @@
-open Ast
 open Type
-open Error
-open Globals
 open CppStrings
-open CppExprUtils
-open CppTypeUtils
-open CppAst
 open CppAstTools
 open CppSourceWriter
 open CppContext
