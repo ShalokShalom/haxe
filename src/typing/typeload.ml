@@ -21,12 +21,7 @@
 
 open Ast
 open Common
-open DisplayTypes.DisplayMode
-open DisplayTypes.CompletionResultKind
 open CompletionItem
-open CompletionModuleType
-open CompletionModuleKind
-open ClassFieldOrigin
 open DisplayException
 open Type
 open Typecore
@@ -684,15 +679,6 @@ and init_meta_overloads ctx co cf =
 			true
 	) cf.cf_meta;
 	cf.cf_overloads <- (List.rev !overloads)
-
-let t_iterator ctx p =
-	match load_qualified_type_def ctx [] "StdTypes" "Iterator" p with
-	| TTypeDecl t ->
-		add_dependency ctx.m.curmod t.t_module MDepFromTyping;
-		let pt = spawn_monomorph ctx.e p in
-		apply_typedef t [pt], pt
-	| _ ->
-		die "" __LOC__
 
 (*
 	load either a type t or Null<Unknown> if not defined

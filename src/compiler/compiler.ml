@@ -377,7 +377,7 @@ let compile ctx actx callbacks =
 	t();
 	enter_stage com CInitialized;
 	ServerMessage.compiler_stage com;
-	if actx.classes = [([],"Std")] && not actx.force_typing then begin
+	if actx.classes = [] && not actx.force_typing then begin
 		if actx.cmds = [] && not actx.did_something then actx.raise_usage();
 	end else begin
 		(* Actual compilation starts here *)

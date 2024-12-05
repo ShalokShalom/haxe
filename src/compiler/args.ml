@@ -46,7 +46,7 @@ let parse_args com =
 		s_version_full (if Sys.os_type = "Win32" then ".exe" else "")
 	in
 	let actx = {
-		classes = [([],"Std")];
+		classes = [];
 		xml_out = None;
 		hxb_out = None;
 		json_out = None;
