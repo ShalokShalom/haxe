@@ -331,7 +331,12 @@ let check_module sctx com m_path m_extra p =
 			try
 				check_module_path();
 				if not (has_policy NoFileSystemCheck) || Path.file_extension (Path.UniqueKey.lazy_path m_extra.m_file) <> "hx" then check_file();
-				check_dependencies();
+				let full_typing =
+					com.is_macro_context
+					|| com.display.dms_full_typing
+					|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m_extra.m_file)
+				in
+				if full_typing then check_dependencies();
 				None
 			with
 			| Dirty reason ->
