@@ -604,6 +604,11 @@
 		"doc": "Use Haxe 3.x zero-based column error messages instead of new one-based format."
 	},
 	{
+		"name": "OptimisticDisplayRequests",
+		"define": "optimistic-display-requests",
+		"doc": "Ignore invalidation chains during display requests."
+	},
+	{
 		"name": "PhpPrefix",
 		"define": "php-prefix",
 		"doc": "Root namespace for generated php classes. E.g. if compiled with`-D php-prefix=some.sub`, then all classes will be generated in `\\some\\sub` namespace.",

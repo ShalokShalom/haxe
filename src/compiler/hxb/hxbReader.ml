@@ -718,6 +718,7 @@ class hxb_reader
 	(* Type instances *)
 
 	method should_lazy_wrap =
+		(* Ideally this would be enabled for more cases, but it's just not good enough yet for that *)
 		restore_level = Minimal
 
 	method resolve_ttp_ref = function

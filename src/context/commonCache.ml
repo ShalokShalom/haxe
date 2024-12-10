@@ -105,7 +105,8 @@ let rec cache_context cs com =
 			let cache_module m =
 				(* If we have a signature mismatch, look-up cache for module. Physical equality check is fine as a heuristic. *)
 				let cc = if m.m_extra.m_sign = sign then cc else cs#get_context m.m_extra.m_sign in
-				cc#cache_hxb_module config warn anon_identification m.m_path m;
+				let optimistic_display_requests = Define.defined com.defines Define.OptimisticDisplayRequests in
+				cc#cache_hxb_module ~optimistic_display_requests config warn anon_identification m.m_path m;
 			in
 			cache_module
 	in

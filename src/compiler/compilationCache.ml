@@ -81,7 +81,7 @@ class context_cache (index : int) (sign : Digest.t) = object(self)
 		try (Hashtbl.find modules path).m_extra
 		with Not_found -> (self#get_hxb_module path).mc_extra
 
-	method cache_hxb_module config warn anon_identification path m =
+	method cache_hxb_module ~(optimistic_display_requests:bool) config warn anon_identification path m =
 		match m.m_extra.m_kind with
 		| MImport ->
 			Hashtbl.add modules m.m_path m
@@ -90,19 +90,22 @@ class context_cache (index : int) (sign : Digest.t) = object(self)
 			HxbWriter.write_module writer m;
 
 			(* TODO: avoid running the whole writer again... *)
-			let anon_identification = new Tanon_identification.tanon_identification in
-			let min_writer = HxbWriter.create config None warn anon_identification in
-			min_writer.minimal <- true;
-			HxbWriter.write_module min_writer m;
+			let min_chunks, sig_deps = if optimistic_display_requests then begin
+				let anon_identification = new Tanon_identification.tanon_identification in
+				let min_writer = HxbWriter.create config None warn anon_identification in
+				min_writer.minimal <- true;
+				HxbWriter.write_module min_writer m;
+				HxbWriter.get_chunks min_writer, Some (HxbWriter.get_dependencies min_writer)
+			end else [], None in
 
 			Hashtbl.replace binary_cache path {
 				mc_path = path;
 				mc_id = m.m_id;
 				mc_chunks = HxbWriter.get_chunks writer;
-				mc_min_chunks = HxbWriter.get_chunks min_writer;
+				mc_min_chunks = min_chunks;
 				mc_extra = { m.m_extra with
 					m_cache_state = MSGood;
-					m_sig_deps = Some (HxbWriter.get_dependencies min_writer);
+					m_sig_deps = sig_deps;
 					m_all_deps = PMap.fold (fun mdep acc -> (mdep.md_path, mdep.md_sign) :: acc) (HxbWriter.get_dependencies writer) [];
 				}
 			}

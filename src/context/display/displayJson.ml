@@ -153,7 +153,6 @@ class hxb_reader_api_com
 end
 
 let find_module ~(minimal_restore : bool) com cc path =
-	(* TODO: check all this... *)
 	(new hxb_reader_api_com ~minimal_restore com cc)#find_module path
 
 type handler_context = {
@@ -348,20 +347,22 @@ let handler =
 			let path = Path.parse_path (hctx.jsonrpc#get_string_param "path") in
 			let cs = hctx.display#get_cs in
 			let cc = cs#get_context sign in
+			let minimal_restore = Define.defined hctx.com.defines Define.OptimisticDisplayRequests in
 			let m = try
-				find_module ~minimal_restore:true hctx.com cc path
+				find_module ~minimal_restore hctx.com cc path
 			with Not_found ->
 				hctx.send_error [jstring "No such module"]
 			in
-			hctx.send_result (generate_module (cc#get_hxb) (find_module ~minimal_restore:true hctx.com cc) m)
+			hctx.send_result (generate_module (cc#get_hxb) (find_module ~minimal_restore hctx.com cc) m)
 		);
 		"server/type", (fun hctx ->
 			let sign = Digest.from_hex (hctx.jsonrpc#get_string_param "signature") in
 			let path = Path.parse_path (hctx.jsonrpc#get_string_param "modulePath") in
 			let typeName = hctx.jsonrpc#get_string_param "typeName" in
 			let cc = hctx.display#get_cs#get_context sign in
+			let minimal_restore = Define.defined hctx.com.defines Define.OptimisticDisplayRequests in
 			let m = try
-				find_module ~minimal_restore:true hctx.com cc path
+				find_module ~minimal_restore hctx.com cc path
 			with Not_found ->
 				hctx.send_error [jstring "No such module"]
 			in

@@ -311,7 +311,9 @@ let check_module sctx com m_path m_extra p =
 		in
 		let check_dependencies () =
 			let full_restore =
-				com.display.dms_full_typing
+				com.is_macro_context
+				|| com.display.dms_full_typing
+				|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
 				|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m_extra.m_file)
 			in
 			PMap.iter (fun _ mdep ->
@@ -334,6 +336,7 @@ let check_module sctx com m_path m_extra p =
 				let full_typing =
 					com.is_macro_context
 					|| com.display.dms_full_typing
+					|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
 					|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m_extra.m_file)
 				in
 				if full_typing then check_dependencies();
@@ -398,7 +401,13 @@ let check_module sctx com m_path m_extra p =
 let get_hxb_module com cc path =
 	try
 		let mc = cc#get_hxb_module path in
-		if not com.display.dms_full_typing && not (DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file)) then begin
+		let full_restore =
+			com.is_macro_context
+			|| com.display.dms_full_typing
+			|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
+			|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file)
+		in
+		if not full_restore then begin
 			mc.mc_extra.m_cache_state <- MSGood;
 			BinaryModule mc
 		end else
@@ -442,7 +451,8 @@ class hxb_reader_api_server
 		| BinaryModule mc ->
 			let reader = new HxbReader.hxb_reader path com.hxb_reader_stats (Some cc#get_string_pool_arr) (Common.defined com Define.HxbTimes) in
 			let restore_level:HxbReader.restore_level =
-				if com.display.dms_full_typing then Full
+				if com.is_macro_context || com.display.dms_full_typing then Full
+				else if not (Define.defined com.defines Define.OptimisticDisplayRequests) then Full
 				else if DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file) then DisplayFile
 				else Minimal
 			in
@@ -482,7 +492,7 @@ class hxb_reader_api_server
 		i
 
 	method read_expression_eagerly (cf : tclass_field) =
-		com.display.dms_full_typing
+		com.is_macro_context || com.display.dms_full_typing || not (Define.defined com.defines Define.OptimisticDisplayRequests)
 end
 
 let handle_cache_bound_objects com cbol =
@@ -517,7 +527,9 @@ let rec add_modules sctx com delay (m : module_def) (from_binary : bool) (p : po
 					com.module_lut#add m.m_path m;
 				handle_cache_bound_objects com m.m_extra.m_cache_bound_objects;
 				let full_restore =
-					com.display.dms_full_typing
+					com.is_macro_context
+					|| com.display.dms_full_typing
+					|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
 					|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m.m_extra.m_file)
 				in
 				PMap.iter (fun _ mdep ->
@@ -601,6 +613,7 @@ and type_module sctx com delay mpath p =
 					let reader = new HxbReader.hxb_reader mpath com.hxb_reader_stats (Some cc#get_string_pool_arr) (Common.defined com Define.HxbTimes) in
 					let restore_level:HxbReader.restore_level =
 						if com.is_macro_context || com.display.dms_full_typing then Full
+						else if not (Define.defined com.defines Define.OptimisticDisplayRequests) then Full
 						else if DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file) then DisplayFile
 						else Minimal
 					in
