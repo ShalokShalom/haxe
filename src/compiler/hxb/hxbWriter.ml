@@ -2283,14 +2283,10 @@ module HxbWriter = struct
 end
 
 let get_dependencies writer =
-	let deps = ref PMap.empty in
-
-	List.iter (fun mdep ->
+	List.fold_left (fun deps mdep ->
 		let dep = {md_sign = mdep.m_extra.m_sign; md_path = mdep.m_path; md_kind = mdep.m_extra.m_kind; md_origin = MDepFromTyping} in
-		deps := PMap.add mdep.m_id dep !deps;
-	) writer.deps;
-
-	!deps
+		PMap.add mdep.m_id dep deps;
+	) PMap.empty writer.deps
 
 let create config string_pool warn anon_id =
 	let cp,has_own_string_pool = match string_pool with

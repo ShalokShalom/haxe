@@ -226,6 +226,18 @@ let get_changed_directories sctx com =
 	t();
 	dirs
 
+let full_typing com m_extra =
+	com.is_macro_context
+	|| com.display.dms_full_typing
+	|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
+	|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m_extra.m_file)
+
+let restore_level com m_extra : HxbReader.restore_level =
+	if com.is_macro_context || com.display.dms_full_typing then Full
+	else if not (Define.defined com.defines Define.OptimisticDisplayRequests) then Full
+	else if DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m_extra.m_file) then DisplayFile
+	else Minimal
+
 (* Checks if module [m] can be reused from the cache and returns None in that case. Otherwise, returns
    [Some m'] where [m'] is the module responsible for [m] not being reusable. *)
 let check_module sctx com m_path m_extra p =
@@ -310,12 +322,7 @@ let check_module sctx com m_path m_extra p =
 			(com.cs#get_context sign)#find_module_extra mpath
 		in
 		let check_dependencies () =
-			let full_restore =
-				com.is_macro_context
-				|| com.display.dms_full_typing
-				|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
-				|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m_extra.m_file)
-			in
+			let full_restore = full_typing com m_extra in
 			PMap.iter (fun _ mdep ->
 				let sign = mdep.md_sign in
 				let mpath = mdep.md_path in
@@ -333,13 +340,7 @@ let check_module sctx com m_path m_extra p =
 			try
 				check_module_path();
 				if not (has_policy NoFileSystemCheck) || Path.file_extension (Path.UniqueKey.lazy_path m_extra.m_file) <> "hx" then check_file();
-				let full_typing =
-					com.is_macro_context
-					|| com.display.dms_full_typing
-					|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
-					|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m_extra.m_file)
-				in
-				if full_typing then check_dependencies();
+				if full_typing com m_extra then check_dependencies();
 				None
 			with
 			| Dirty reason ->
@@ -401,13 +402,7 @@ let check_module sctx com m_path m_extra p =
 let get_hxb_module com cc path =
 	try
 		let mc = cc#get_hxb_module path in
-		let full_restore =
-			com.is_macro_context
-			|| com.display.dms_full_typing
-			|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
-			|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file)
-		in
-		if not full_restore then begin
+		if not (full_typing com mc.mc_extra) then begin
 			mc.mc_extra.m_cache_state <- MSGood;
 			BinaryModule mc
 		end else
@@ -450,12 +445,7 @@ class hxb_reader_api_server
 			m
 		| BinaryModule mc ->
 			let reader = new HxbReader.hxb_reader path com.hxb_reader_stats (Some cc#get_string_pool_arr) (Common.defined com Define.HxbTimes) in
-			let restore_level:HxbReader.restore_level =
-				if com.is_macro_context || com.display.dms_full_typing then Full
-				else if not (Define.defined com.defines Define.OptimisticDisplayRequests) then Full
-				else if DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file) then DisplayFile
-				else Minimal
-			in
+			let restore_level = restore_level com mc.mc_extra in
 			let f_next chunks until =
 				let macro = if com.is_macro_context then " (macro)" else "" in
 				let t_hxb = Timer.timer ["server";"module cache";"hxb read" ^ macro;"until " ^ (string_of_chunk_kind until)] in
@@ -526,12 +516,7 @@ let rec add_modules sctx com delay (m : module_def) (from_binary : bool) (p : po
 				if not from_binary || m != m then
 					com.module_lut#add m.m_path m;
 				handle_cache_bound_objects com m.m_extra.m_cache_bound_objects;
-				let full_restore =
-					com.is_macro_context
-					|| com.display.dms_full_typing
-					|| not (Define.defined com.defines Define.OptimisticDisplayRequests)
-					|| DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m.m_extra.m_file)
-				in
+				let full_restore = full_typing com m.m_extra in
 				PMap.iter (fun _ mdep ->
 					let mpath = mdep.md_path in
 					if mdep.md_sign = own_sign then begin
@@ -550,7 +535,6 @@ let rec add_modules sctx com delay (m : module_def) (from_binary : bool) (p : po
 								| BadModule reason ->
 									failwith (Printf.sprintf "Unexpected bad module %s (%s) as a dependency of %s" (s_type_path mpath) (Printer.s_module_skip_reason reason) (s_type_path m0.m_path))
 					end
-				(* ) (if full_restore then m.m_extra.m_deps else PMap.empty) *)
 				) (if full_restore then m.m_extra.m_deps else Option.default m.m_extra.m_deps m.m_extra.m_sig_deps)
 			)
 		end
@@ -594,29 +578,20 @@ and type_module sctx com delay mpath p =
 			   in the cache. The true cache state will be known after check_module. *)
 			begin match check_module sctx mpath m.m_extra p with
 				| None ->
-					(* TODO: does this help at all? *)
-					(* let is_display_file = DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key m.m_extra.m_file) in *)
-					(* if is_display_file then DisplayPosition.display_position#set_display_module m.m_path m.m_extra; *)
-
 					add_modules false m;
 				| Some reason ->
 					skip m.m_path reason
 			end
 		| BinaryModule mc ->
-			let is_display_file = DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file) in
-			if is_display_file then DisplayPosition.display_position#set_display_module mc.mc_path mc.mc_extra;
+			if (DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file)) then
+				DisplayPosition.display_position#set_display_module mc.mc_path mc.mc_extra;
 
 			(* Similarly, we only know that a binary module wasn't explicitly tainted. Decode it only after
 			   checking dependencies. This means that the actual decoding never has any reason to fail. *)
 			begin match check_module sctx mpath mc.mc_extra p with
 				| None ->
 					let reader = new HxbReader.hxb_reader mpath com.hxb_reader_stats (Some cc#get_string_pool_arr) (Common.defined com Define.HxbTimes) in
-					let restore_level:HxbReader.restore_level =
-						if com.is_macro_context || com.display.dms_full_typing then Full
-						else if not (Define.defined com.defines Define.OptimisticDisplayRequests) then Full
-						else if DisplayPosition.display_position#is_in_file (Path.UniqueKey.lazy_key mc.mc_extra.m_file) then DisplayFile
-						else Minimal
-					in
+					let restore_level = restore_level com mc.mc_extra in
 					let api = match com.hxb_reader_api with
 						| Some api ->
 							api
@@ -640,9 +615,9 @@ and type_module sctx com delay mpath p =
 
 					(* We try to avoid reading expressions as much as possible, so we only do this for
 					   our current display file if we're in display mode. *)
-          if restore_level <> Minimal then ignore(f_next chunks EOM)
-          else if DisplayPosition.display_position#is_display_dependency m.m_path m.m_extra.m_sign then
-            delay (fun () -> ignore(f_next chunks EOF));
+					if restore_level <> Minimal then ignore(f_next chunks EOM)
+					else if DisplayPosition.display_position#is_display_dependency m.m_path m.m_extra.m_sign then
+						delay (fun () -> ignore(f_next chunks EOF));
 					add_modules true m;
 				| Some reason ->
 					skip mpath reason
