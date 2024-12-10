@@ -160,7 +160,7 @@ class hxb_reader
 	val mutable string_pool = (match string_pool with None -> Array.make 0 "" | Some pool -> pool)
 	val mutable doc_pool = Array.make 0 ""
 
-	val mutable classes = Array.make 0 null_class
+	val mutable classes = Array.make 0 (Lazy.from_val null_class)
 	val mutable abstracts = Array.make 0 (Lazy.from_val null_abstract)
 	val mutable enums = Array.make 0 (Lazy.from_val null_enum)
 	val mutable typedefs = Array.make 0 (Lazy.from_val null_typedef)
@@ -752,6 +752,7 @@ class hxb_reader
 			(mk_type_param { null_class with cl_path = path } TPHUnbound None None).ttp_type
 		| 10 ->
 			let c = self#read_class_ref in
+			let c = Lazy.force c in
 			c.cl_type
 		| 11 ->
 			let en = self#read_enum_ref in
@@ -827,19 +828,23 @@ class hxb_reader
 			TFun(args,ret)
 		| 40 ->
 			let c = self#read_class_ref in
+			let c = Lazy.force c in
 			TInst(c,[])
 		| 41 ->
 			let c = self#read_class_ref in
 			let t1 = self#read_type_instance in
+			let c = Lazy.force c in
 			TInst(c,[t1])
 		| 42 ->
 			let c = self#read_class_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
+			let c = Lazy.force c in
 			TInst(c,[t1;t2])
 		| 49 ->
 			let c = self#read_class_ref in
 			let tl = self#read_types in
+			let c = Lazy.force c in
 			TInst(c,tl)
 		| 50 ->
 			let en = self#read_enum_ref in
@@ -1291,12 +1296,14 @@ class hxb_reader
 					| 102 ->
 						let e1 = loop () in
 						let c = self#read_class_ref in
+						let c = Lazy.force c in
 						let tl = self#read_types in
 						let cf = self#read_field_ref in
 						TField(e1,FInstance(c,tl,cf)),None
 					| 103 ->
 						let e1 = loop () in
 						let c = self#read_class_ref in
+						let c = Lazy.force c in
 						let cf = self#read_field_ref in
 						TField(e1,FStatic(c,cf)),None
 					| 104 ->
@@ -1306,6 +1313,7 @@ class hxb_reader
 					| 105 ->
 						let e1 = loop () in
 						let c = self#read_class_ref in
+						let c = Lazy.force c in
 						let tl = self#read_types in
 						let cf = self#read_field_ref in
 						TField(e1,FClosure(Some(c,tl),cf)),None
@@ -1327,12 +1335,14 @@ class hxb_reader
 					| 110 ->
 						let p = read_relpos () in
 						let c = self#read_class_ref in
+						let c = Lazy.force c in
 						let cf = self#read_field_ref in
 						let e1 = Texpr.Builder.make_static_this c p in
 						TField(e1,FStatic(c,cf)),None
 					| 111 ->
 						let p = read_relpos () in
 						let c = self#read_class_ref in
+						let c = Lazy.force c in
 						let tl = self#read_types in
 						let cf = self#read_field_ref in
 						let ethis = mk (TConst TThis) (Option.get fctx.tthis) p in
@@ -1341,6 +1351,7 @@ class hxb_reader
 					(* module types 120-139 *)
 					| 120 ->
 						let c = self#read_class_ref in
+						let c = Lazy.force c in
 						TTypeExpr (TClassDecl c),(Some c.cl_type)
 					| 121 ->
 						let en = self#read_enum_ref in
@@ -1359,6 +1370,7 @@ class hxb_reader
 						TCast(e1,Some mt),None
 					| 126 ->
 						let c = self#read_class_ref in
+						let c = Lazy.force c in
 						let tl = self#read_types in
 						let el = loop_el() in
 						TNew(c,tl,el),None
@@ -1558,6 +1570,7 @@ class hxb_reader
 		infos.mt_params <- Array.to_list type_type_parameters;
 		infos.mt_using <- self#read_list (fun () ->
 			let c = self#read_class_ref in
+			let c = Lazy.force c in
 			let p = self#read_pos in
 			(c,p)
 		)
@@ -1569,6 +1582,7 @@ class hxb_reader
 		| 3 -> KGeneric
 		| 4 ->
 			let c = self#read_class_ref in
+			let c = Lazy.force c in
 			let tl = self#read_types in
 			KGenericInstance(c,tl)
 		| 5 -> KMacroType
@@ -1583,6 +1597,7 @@ class hxb_reader
 		c.cl_kind <- self#read_class_kind;
 		let read_relation () =
 			let c = self#read_class_ref in
+			let c = Lazy.force c in
 			let tl = self#read_types in
 			(c,tl)
 		in
@@ -1596,7 +1611,7 @@ class hxb_reader
 
 	method read_abstract (a : tabstract) =
 		self#read_common_module_type (Obj.magic a);
-		a.a_impl <- self#read_option (fun () -> self#read_class_ref);
+		a.a_impl <- self#read_option (fun () -> Lazy.force self#read_class_ref);
 		begin match read_byte ch with
 			| 0 ->
 				a.a_this <- TAbstract(a,extract_param_types a.a_params)
@@ -1704,6 +1719,7 @@ class hxb_reader
 		let l = read_uleb128 ch in
 		let a = Array.init l (fun i ->
 			let c = self#read_class_ref in
+			let c = Lazy.force c in
 			let kind = match read_byte ch with
 				| 0 -> CfrStatic
 				| 1 -> CfrMember
@@ -1756,12 +1772,14 @@ class hxb_reader
 		let l = read_uleb128 ch in
 		for i = 0 to l - 1 do
 			let c = classes.(i) in
+			let c = Lazy.force c in
 			self#read_class_fields c;
 		done
 
 	method read_exd =
 		ignore(self#read_list (fun () ->
 			let c = self#read_class_ref in
+			let c = Lazy.force c in
 			self#read_list (fun () ->
 				let cf = self#read_field_ref in
 				let length = read_uleb128 ch in
@@ -1807,6 +1825,7 @@ class hxb_reader
 		let l = read_uleb128 ch in
 		for i = 0 to l - 1 do
 			let c = classes.(i) in
+			let c = Lazy.force c in
 			self#read_class c;
 		done
 
@@ -1868,12 +1887,14 @@ class hxb_reader
 	method read_clr =
 		let l = read_uleb128 ch in
 		classes <- (Array.init l (fun i ->
-				let (pack,mname,tname) = self#read_full_path in
+			let (pack,mname,tname) = self#read_full_path in
+			Lazy.from_fun (fun () ->
 				match self#resolve_type pack mname tname with
 				| TClassDecl c ->
 					c
 				| _ ->
 					error ("Unexpected type where class was expected: " ^ (s_type_path (pack,tname)))
+			)
 		))
 
 	method read_abr =
