@@ -167,8 +167,8 @@ class hxb_reader
 	val mutable anons = Array.make 0 null_tanon
 	val mutable anon_fields = Array.make 0 null_field
 	val mutable tmonos = Array.make 0 (mk_mono())
-	val mutable class_fields = Array.make 0 null_field
-	val mutable enum_fields = Array.make 0 null_enum_field
+	val mutable class_fields = Array.make 0 (Lazy.from_val null_field)
+	val mutable enum_fields = Array.make 0 (Lazy.from_val null_enum_field)
 
 	val mutable type_type_parameters = Array.make 0 (mk_type_param null_class TPHType None None)
 	val mutable field_type_parameters = Array.make 0 (mk_type_param null_class TPHMethod None None)
@@ -300,10 +300,12 @@ class hxb_reader
 		typedefs.(read_uleb128 ch)
 
 	method read_field_ref =
-		class_fields.(read_uleb128 ch)
+		let cf = class_fields.(read_uleb128 ch) in
+		Lazy.force cf
 
 	method read_enum_field_ref =
-		enum_fields.(read_uleb128 ch)
+		let ef = enum_fields.(read_uleb128 ch) in
+		Lazy.force ef
 
 	method read_anon_ref =
 		match read_byte ch with
@@ -1645,8 +1647,10 @@ class hxb_reader
 		let a = Array.init l (fun i ->
 			let en = self#read_enum_ref in
 			let name = self#read_string in
-			let en = Lazy.force en in
-			PMap.find name en.e_constrs
+			Lazy.from_fun (fun () ->
+				let en = Lazy.force en in
+				PMap.find name en.e_constrs
+			)
 		) in
 		enum_fields <- a
 
@@ -1674,7 +1678,6 @@ class hxb_reader
 		let l = read_uleb128 ch in
 		let a = Array.init l (fun i ->
 			let c = self#read_class_ref in
-			let c = Lazy.force c in
 			let kind = match read_byte ch with
 				| 0 -> CfrStatic
 				| 1 -> CfrMember
@@ -1682,44 +1685,56 @@ class hxb_reader
 				| 3 -> CfrInit
 				| _ -> die "" __LOC__
 			in
-			let cf =  match kind with
-				| CfrStatic ->
-					let name = self#read_string in
-					begin try
-						PMap.find name c.cl_statics
-					with Not_found ->
-						raise (HxbFailure (Printf.sprintf "Could not read static field %s on %s while hxbing %s" name (s_type_path c.cl_path) (s_type_path current_module.m_path)))
-					end;
+			let name = match kind with
+				| CfrStatic
 				| CfrMember ->
-					let name = self#read_string in
-					begin try
-						PMap.find name c.cl_fields
-					with Not_found ->
-						raise (HxbFailure (Printf.sprintf "Could not read instance field %s on %s while hxbing %s" name (s_type_path c.cl_path) (s_type_path current_module.m_path)))
-					end
-				| CfrConstructor ->
-					Option.get c.cl_constructor
+					Some self#read_string
+				| CfrConstructor
 				| CfrInit ->
-					Option.get c.cl_init
-			in
-			let pick_overload cf depth =
-				let rec loop depth cfl = match cfl with
-					| cf :: cfl ->
-						if depth = 0 then
-							cf
-						else
-							loop (depth - 1) cfl
-					| [] ->
-						raise (HxbFailure (Printf.sprintf "Bad overload depth for %s on %s: %i" cf.cf_name (s_type_path c.cl_path) depth))
-				in
-				let cfl = cf :: cf.cf_overloads in
-				loop depth cfl
+					None
 			in
 			let depth = read_uleb128 ch in
-			if depth = 0 then
-				cf
-			else
-				pick_overload cf depth;
+
+			Lazy.from_fun (fun () ->
+				let c = Lazy.force c in
+				let cf = match kind with
+					| CfrStatic ->
+						let name = Option.get name in
+						begin try
+							PMap.find name c.cl_statics
+						with Not_found ->
+							raise (HxbFailure (Printf.sprintf "Could not read static field %s on %s while hxbing %s" name (s_type_path c.cl_path) (s_type_path current_module.m_path)))
+						end;
+					| CfrMember ->
+						let name = Option.get name in
+						begin try
+							PMap.find name c.cl_fields
+						with Not_found ->
+							raise (HxbFailure (Printf.sprintf "Could not read instance field %s on %s while hxbing %s" name (s_type_path c.cl_path) (s_type_path current_module.m_path)))
+						end
+					| CfrConstructor ->
+						Option.get c.cl_constructor
+					| CfrInit ->
+						Option.get c.cl_init
+				in
+				let pick_overload cf depth =
+					let rec loop depth cfl = match cfl with
+						| cf :: cfl ->
+							if depth = 0 then
+								cf
+							else
+								loop (depth - 1) cfl
+						| [] ->
+							raise (HxbFailure (Printf.sprintf "Bad overload depth for %s on %s: %i" cf.cf_name (s_type_path c.cl_path) depth))
+					in
+					let cfl = cf :: cf.cf_overloads in
+					loop depth cfl
+				in
+				if depth = 0 then
+					cf
+				else
+					pick_overload cf depth;
+			)
 		) in
 		class_fields <- a
 
