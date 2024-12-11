@@ -709,9 +709,6 @@ class hxb_reader
 
 	(* Type instances *)
 
-	method should_lazy_wrap =
-		restore_level = Minimal
-
 	method resolve_ttp_ref = function
 		| 1 ->
 			let i = read_uleb128 ch in
@@ -756,20 +753,14 @@ class hxb_reader
 			c.cl_type
 		| 11 ->
 			let en = self#read_enum_ref in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					(Lazy.force en).e_type
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				(Lazy.force en).e_type
+			)))
 		| 12 ->
 			let a = self#read_abstract_ref in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TType(abstract_module_type (Lazy.force a) [],[])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TType(abstract_module_type (Lazy.force a) [],[])
+			)))
 		| 13 ->
 			let e = self#read_expr in
 			let c = {null_class with cl_kind = KExpr e; cl_module = current_module } in
@@ -848,112 +839,76 @@ class hxb_reader
 			TInst(c,tl)
 		| 50 ->
 			let en = self#read_enum_ref in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TEnum(Lazy.force en,[])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TEnum(Lazy.force en,[])
+			)))
 		| 51 ->
 			let en = self#read_enum_ref in
 			let t1 = self#read_type_instance in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TEnum(Lazy.force en,[t1])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TEnum(Lazy.force en,[t1])
+			)))
 		| 52 ->
 			let en = self#read_enum_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TEnum(Lazy.force en,[t1;t2])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TEnum(Lazy.force en,[t1;t2])
+			)))
 		| 59 ->
 			let e = self#read_enum_ref in
 			let tl = self#read_types in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TEnum(Lazy.force e,tl)
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TEnum(Lazy.force e,tl)
+			)))
 		| 60 ->
 			let td = self#read_typedef_ref in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TType(Lazy.force td,[])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TType(Lazy.force td,[])
+			)))
 		| 61 ->
 			let td = self#read_typedef_ref in
 			let t1 = self#read_type_instance in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TType(Lazy.force td,[t1])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TType(Lazy.force td,[t1])
+			)))
 		| 62 ->
 			let td = self#read_typedef_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TType(Lazy.force td,[t1;t2])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TType(Lazy.force td,[t1;t2])
+			)))
 		| 69 ->
 			let t = self#read_typedef_ref in
 			let tl = self#read_types in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TType(Lazy.force t,tl)
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TType(Lazy.force t,tl)
+			)))
 		| 70 ->
 			let a = self#read_abstract_ref in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TAbstract(Lazy.force a,[])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TAbstract(Lazy.force a,[])
+			)))
 		| 71 ->
 			let a = self#read_abstract_ref in
 			let t1 = self#read_type_instance in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TAbstract(Lazy.force a,[t1])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TAbstract(Lazy.force a,[t1])
+			)))
 		| 72 ->
 			let a = self#read_abstract_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TAbstract(Lazy.force a,[t1;t2])
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TAbstract(Lazy.force a,[t1;t2])
+			)))
 		| 79 ->
 			let a = self#read_abstract_ref in
 			let tl = self#read_types in
-			if self#should_lazy_wrap then
-				TLazy (ref (LWait (fun () ->
-					TAbstract(Lazy.force a,tl)
-				)))
-			else
+			TLazy (ref (LWait (fun () ->
 				TAbstract(Lazy.force a,tl)
+			)))
 		| 80 ->
 			empty_anon
 		| 81 ->
