@@ -1398,8 +1398,9 @@ class hxb_reader
 	method read_class_field_forward =
 		let name = self#read_string in
 		let pos,name_pos = self#read_pos_pair in
+		let cf_meta = self#read_metadata in
 		let overloads = self#read_list (fun () -> self#read_class_field_forward) in
-		{ null_field with cf_name = name; cf_pos = pos; cf_name_pos = name_pos; cf_overloads = overloads }
+		{ null_field with cf_name = name; cf_pos = pos; cf_name_pos = name_pos; cf_overloads = overloads; cf_meta = cf_meta }
 
 	method start_texpr =
 		begin match read_byte ch with
@@ -1457,7 +1458,6 @@ class hxb_reader
 		let flags = read_uleb128 ch in
 
 		let doc = self#read_option (fun () -> self#read_documentation) in
-		cf.cf_meta <- self#read_metadata;
 		let kind = self#read_field_kind in
 
 		let expr,expr_unoptimized = match read_byte ch with

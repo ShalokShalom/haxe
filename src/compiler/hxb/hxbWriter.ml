@@ -1746,6 +1746,7 @@ module HxbWriter = struct
 	and write_class_field_forward writer cf =
 		Chunk.write_string writer.chunk cf.cf_name;
 		write_pos_pair writer cf.cf_pos cf.cf_name_pos;
+		write_metadata writer cf.cf_meta;
 		Chunk.write_list writer.chunk cf.cf_overloads (fun cf ->
 			write_class_field_forward writer cf;
 		);
@@ -1794,7 +1795,6 @@ module HxbWriter = struct
 		write_type_instance writer cf.cf_type;
 		Chunk.write_uleb128 writer.chunk cf.cf_flags;
 		maybe_write_documentation writer cf.cf_doc;
-		write_metadata writer cf.cf_meta;
 		write_field_kind writer cf.cf_kind;
 		let expr_chunk = match cf.cf_expr with
 			| None ->
