@@ -154,6 +154,7 @@ class hxb_reader
 	val mutable api = Obj.magic ""
 	val mutable full_restore = true
 	val mutable current_module = null_module
+	val mutable delayed_field_loading : (unit->unit) list = []
 
 	val mutable ch = BytesWithPosition.create (Bytes.create 0)
 	val mutable has_string_pool = (string_pool <> None)
@@ -176,6 +177,9 @@ class hxb_reader
 
 	val mutable field_type_parameter_offset = 0
 	val empty_anon = mk_anon (ref Closed)
+
+	method set_delayed_field_loading f =
+		delayed_field_loading <- f :: delayed_field_loading
 
 	method add_dependency mdep =
 		match current_module.m_extra.m_display_deps with
@@ -1939,7 +1943,24 @@ class hxb_reader
 				c.cl_flags <- read_uleb128 ch;
 
 				let read_field () =
-					self#read_class_field_forward;
+					let cf = self#read_class_field_forward in
+					if not full_restore then begin
+						let r = ref (lazy_processing t_dynamic) in
+						r := lazy_wait (fun() ->
+							begin match delayed_field_loading with
+								| [] -> ()
+								| f :: [] ->
+									f();
+									delayed_field_loading <- []
+								| l ->
+									List.iter (fun f -> f()) l;
+									delayed_field_loading <- []
+							end;
+							cf.cf_type
+						);
+						cf.cf_type <- TLazy r;
+					end;
+					cf
 				in
 
 				c.cl_constructor <- self#read_option read_field;
@@ -1949,7 +1970,7 @@ class hxb_reader
 						if i = 0 then
 							acc_l,acc_pm
 						else begin
-							let cf = self#read_class_field_forward in
+							let cf = read_field () in
 							loop (cf :: acc_l) (PMap.add cf.cf_name cf acc_pm) (i - 1)
 						end
 					in
