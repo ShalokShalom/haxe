@@ -469,6 +469,12 @@ class hxb_reader_api_server
 
 	method read_expression_eagerly (cf : tclass_field) =
 		com.display.dms_full_typing
+
+	method make_lazy_type t f =
+		let r = make_unforced_lazy t f "server-api" in
+		 (* TODO: This should probably use the PForce pass, not PConnectField *)
+		delay (fun () -> ignore(lazy_type r));
+		TLazy r
 end
 
 let handle_cache_bound_objects com cbol =

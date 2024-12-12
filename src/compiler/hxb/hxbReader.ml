@@ -190,6 +190,9 @@ class hxb_reader
 		else
 			None
 
+	method make_lazy_type_dynamic f : Type.t =
+		api#make_lazy_type t_dynamic f
+
 	(* Primitives *)
 
 	method read_i32 =
@@ -755,14 +758,14 @@ class hxb_reader
 			c.cl_type
 		| 11 ->
 			let en = self#read_enum_ref in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				(Lazy.force en).e_type
-			)))
+			)
 		| 12 ->
 			let a = self#read_abstract_ref in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TType(abstract_module_type (Lazy.force a) [],[])
-			)))
+			)
 		| 13 ->
 			let e = self#read_expr in
 			let c = {null_class with cl_kind = KExpr e; cl_module = current_module } in
@@ -841,76 +844,76 @@ class hxb_reader
 			TInst(c,tl)
 		| 50 ->
 			let en = self#read_enum_ref in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TEnum(Lazy.force en,[])
-			)))
+			)
 		| 51 ->
 			let en = self#read_enum_ref in
 			let t1 = self#read_type_instance in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TEnum(Lazy.force en,[t1])
-			)))
+			)
 		| 52 ->
 			let en = self#read_enum_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TEnum(Lazy.force en,[t1;t2])
-			)))
+			)
 		| 59 ->
 			let e = self#read_enum_ref in
 			let tl = self#read_types in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TEnum(Lazy.force e,tl)
-			)))
+			)
 		| 60 ->
 			let td = self#read_typedef_ref in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TType(Lazy.force td,[])
-			)))
+			);
 		| 61 ->
 			let td = self#read_typedef_ref in
 			let t1 = self#read_type_instance in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TType(Lazy.force td,[t1])
-			)))
+			)
 		| 62 ->
 			let td = self#read_typedef_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TType(Lazy.force td,[t1;t2])
-			)))
+			)
 		| 69 ->
 			let t = self#read_typedef_ref in
 			let tl = self#read_types in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TType(Lazy.force t,tl)
-			)))
+			)
 		| 70 ->
 			let a = self#read_abstract_ref in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TAbstract(Lazy.force a,[])
-			)))
+			)
 		| 71 ->
 			let a = self#read_abstract_ref in
 			let t1 = self#read_type_instance in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TAbstract(Lazy.force a,[t1])
-			)))
+			)
 		| 72 ->
 			let a = self#read_abstract_ref in
 			let t1 = self#read_type_instance in
 			let t2 = self#read_type_instance in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TAbstract(Lazy.force a,[t1;t2])
-			)))
+			)
 		| 79 ->
 			let a = self#read_abstract_ref in
 			let tl = self#read_types in
-			TLazy (ref (LWait (fun () ->
+			self#make_lazy_type_dynamic (fun () ->
 				TAbstract(Lazy.force a,tl)
-			)))
+			)
 		| 80 ->
 			empty_anon
 		| 81 ->
@@ -1772,14 +1775,12 @@ class hxb_reader
 					read_expressions ()
 				else begin
 					let t = cf.cf_type in
-					let r = ref (lazy_available t) in
-					r := lazy_wait (fun() ->
+					let tl = api#make_lazy_type cf.cf_type (fun () ->
 						cf.cf_type <- t;
-						r := lazy_available t;
-						read_expressions ();
+						read_expressions();
 						t
-					);
-					cf.cf_type <- TLazy r
+					) in
+					cf.cf_type <- tl
 				end
 			)
 		))

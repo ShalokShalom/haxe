@@ -771,6 +771,9 @@ class hxb_reader_api_typeload
 			| Method _ ->
 				delay g PTypeField (fun () -> ignore(follow cf.cf_type));
 				false
+
+	method make_lazy_type t f =
+		TLazy (make_lazy g t f "typeload-api")
 end
 
 let rec load_hxb_module com g path p =
