@@ -1197,7 +1197,11 @@ module HxbWriter = struct
 			| TInst ({cl_path = ([],"String")},[]) ->
 				Chunk.write_u8 writer.chunk 104;
 			| TMono r ->
-				Monomorph.close r;
+				(try Monomorph.close r with TUnification.Unify_error e ->
+					let p = file_pos (Path.UniqueKey.lazy_path writer.current_module.m_extra.m_file) in
+					let msg = Printf.sprintf "Error while handling unclosed monomorph: %s" (Error.error_msg (Unify e)) in
+					writer.warn WUnclosedMonomorph msg p
+				);
 				begin match r.tm_type with
 				| None ->
 					Chunk.write_u8 writer.chunk 0;
