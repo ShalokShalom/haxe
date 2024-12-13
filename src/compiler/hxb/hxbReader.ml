@@ -181,19 +181,13 @@ class hxb_reader
 	method set_delayed_field_loading f =
 		delayed_field_loading <- f :: delayed_field_loading
 
-	method add_dependency mdep =
-		match current_module.m_extra.m_display_deps with
-		| Some deps ->
-			if mdep != null_module && (current_module.m_path != mdep.m_path || current_module.m_extra.m_sign != mdep.m_extra.m_sign) then
-				current_module.m_extra.m_display_deps <- Some (PMap.add mdep.m_id ({md_sign = mdep.m_extra.m_sign; md_path = mdep.m_path; md_kind = mdep.m_extra.m_kind; md_origin = MDepFromTyping}) deps)
-		| None -> die "" __LOC__
-
 	method resolve_type pack mname tname =
 		try
 			let mt = api#resolve_type pack mname tname in
 			if not full_restore then begin
-				let tinfos = t_infos mt in
-				self#add_dependency tinfos.mt_module;
+				let mdep = (t_infos mt).mt_module in
+				if mdep != null_module && current_module.m_path != mdep.m_path then
+					current_module.m_extra.m_display_deps <- Some (PMap.add mdep.m_id (create_dependency mdep MDepFromTyping) (Option.get current_module.m_extra.m_display_deps))
 			end;
 			mt
 		with Not_found ->
@@ -1947,15 +1941,13 @@ class hxb_reader
 					if not full_restore then begin
 						let r = ref (lazy_processing t_dynamic) in
 						r := lazy_wait (fun() ->
-							begin match delayed_field_loading with
-								| [] -> ()
-								| f :: [] ->
+							let rec loop = function
+								| [] -> []
+								| f :: l ->
 									f();
-									delayed_field_loading <- []
-								| l ->
-									List.iter (fun f -> f()) l;
-									delayed_field_loading <- []
-							end;
+									loop l
+							in
+							delayed_field_loading <- loop delayed_field_loading;
 							cf.cf_type
 						);
 						cf.cf_type <- TLazy r;
