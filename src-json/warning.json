@@ -135,7 +135,7 @@
 	},
 	{
 		"name": "WUnclosedMonomorph",
-		"doc": "Hxb writer failed to close a monomorph (that monomorph should have been closed in the first place, please open an issue)",
+		"doc": "Hxb writer failed to close a monomorph (that monomorph should have been closed in the first place)",
 		"parent": "WHxb"
 	}
 ]
