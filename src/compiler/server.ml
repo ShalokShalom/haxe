@@ -476,7 +476,6 @@ class hxb_reader_api_server
 
 	method make_lazy_type t f =
 		let r = make_unforced_lazy t f "server-api" in
-		 (* TODO: This should probably use the PForce pass, not PConnectField *)
 		delay (fun () -> ignore(lazy_type r));
 		TLazy r
 end
