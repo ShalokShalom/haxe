@@ -1248,6 +1248,7 @@ let create_method (ctx,cctx,fctx) c f cf fd p =
 	end;
 	let is_override = Option.is_some fctx.override in
 	if (is_override && fctx.is_static) then invalid_modifier_combination fctx ctx.com fctx "override" "static" p;
+	if is_override then add_class_field_flag cf CfOverride;
 
 	ctx.type_params <- params @ ctx.type_params;
 	let args,ret = setup_args_ret ctx cctx fctx (fst f.cff_name) fd p in
