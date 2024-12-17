@@ -1499,12 +1499,6 @@ module HxbWriter = struct
 				loop e1;
 				loop e2;
 				false;
-			| TFor(v,e1,e2) ->
-				Chunk.write_u8 writer.chunk 86;
-				declare_var v;
-				loop e1;
-				loop e2;
-				false;
 			(* control flow 90-99 *)
 			| TReturn None ->
 				Chunk.write_u8 writer.chunk 90;
